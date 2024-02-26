@@ -23,16 +23,19 @@ trackSources.forEach((trackPath, index) =>
 function toggleMute(trackIndex) 
 {
 	const track = tracks[trackIndex];
-	if (track.isMuted)
+
+	if (track.source.startCalled)
 	{
-		track.gainNode.gain.value = 1;
-		track.isMuted = false;
-	}
-	
-	else
-	{
-		track.gainNode.gain.value = 0;
-		track.isMuted = true;
+		if (track.isMuted)
+		{
+			track.gainNode.gain.value = 1;
+			track.isMuted = false;
+		}
+		else
+		{
+			track.gainNode.gain.value = 0;
+			track.isMuted = true;
+		}
 	}
 }
 
