@@ -54,5 +54,3 @@ async function initializeAndPlayTracks() {
 	await loadAllTracks(trackSources);
 	playAllTracks();
 }
-
-initializeAndPlayTracks();
