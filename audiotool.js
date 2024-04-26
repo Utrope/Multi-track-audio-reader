@@ -20,7 +20,7 @@ function toggleMute(trackIndex) {
 }
 
 async function togglePlayPause() {
-    if (!audioContext) {
+    if (!audioContext || audioContext.state == 'closed') {
         await loadAllTracks(trackSources); 
     }
     if (!isPlaying) {
@@ -63,7 +63,12 @@ async function loadAllTracks(trackSources) {
 function createSource(buffer) {
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
+	source.onended = handleTrackEnd;
     return source;
+}
+
+function handleTrackEnd() {
+	stopTracks();
 }
 
 async function initializeAndPlayTracks() {
