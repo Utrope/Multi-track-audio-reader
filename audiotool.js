@@ -1,4 +1,4 @@
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext;
 const tracks = [];
 const trackSources = ['./MashupCutBass.m4a', './MashupCutDrums.m4a', './MashupCutGuitar.m4a',
 './MashupCutOther.m4a', './MashupCutPiano.m4a', './MashupCutVocals.m4a'];
@@ -26,6 +26,9 @@ function toggleMute(trackIndex) {
 }
 
 async function togglePlayPause() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
     if (!isPlaying) {
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
@@ -43,6 +46,9 @@ async function togglePlayPause() {
 }
 
 async function loadAllTracks(trackSources) {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
     const trackPromises = trackSources.map(trackPath => loadTrack(trackPath));
     const loadedTracks = await Promise.all(trackPromises);
     loadedTracks.forEach(track => tracks.push(track));
