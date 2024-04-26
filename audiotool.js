@@ -1,5 +1,8 @@
 let audioContext;
-const tracks = [];
+let currentTrackTime = 0;
+let startTime = 0; 
+let tracks = [];
+
 const trackSources = ['./MashupCutBass.m4a', './MashupCutDrums.m4a', './MashupCutGuitar.m4a',
 './MashupCutOther.m4a', './MashupCutPiano.m4a', './MashupCutVocals.m4a'];
 let isPlaying = false;
@@ -7,16 +10,7 @@ let isPlaying = false;
 async function loadTrack(trackPath) {
     const response = await fetch(trackPath);
     const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-    const trackSource = audioContext.createBufferSource();
-    trackSource.buffer = audioBuffer;
-
-    const gainNode = audioContext.createGain();
-    trackSource.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    return { source: trackSource, gainNode: gainNode, isMuted: false };
+    return await audioContext.decodeAudioData(arrayBuffer);
 }
 
 function toggleMute(trackIndex) {
@@ -27,31 +21,49 @@ function toggleMute(trackIndex) {
 
 async function togglePlayPause() {
     if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        await loadAllTracks(trackSources); 
     }
     if (!isPlaying) {
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
-        } else {
-            const startTime = audioContext.currentTime + 0.1;
-            tracks.forEach(track => {
-                track.source.start(startTime);
-            });
         }
+        tracks.forEach(track => {
+            if (!track.source) {
+                track.source = createSource(track.buffer);
+                track.source.connect(track.gainNode);
+                track.gainNode.connect(audioContext.destination);
+            }
+            track.source.start(0, currentTrackTime);
+        });
+        startTime = audioContext.currentTime - currentTrackTime;
         isPlaying = true;
     } else {
-        await audioContext.suspend();
+        currentTrackTime = audioContext.currentTime - startTime;
+        tracks.forEach(track => {
+            if (track.source) {
+                track.source.stop();
+                track.source = null;
+            }
+        });
         isPlaying = false;
     }
 }
 
 async function loadAllTracks(trackSources) {
-    if (!audioContext) {
+    if (!audioContext || audioContext.state === 'closed') {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
-    const trackPromises = trackSources.map(trackPath => loadTrack(trackPath));
-    const loadedTracks = await Promise.all(trackPromises);
-    loadedTracks.forEach(track => tracks.push(track));
+    const bufferPromises = trackSources.map(trackPath => loadTrack(trackPath));
+    const buffers = await Promise.all(bufferPromises);
+    tracks = buffers.map(buffer => {
+        let gainNode = audioContext.createGain(); // Create a new gain node for each track
+        return { buffer: buffer, gainNode: gainNode, isMuted: false };
+    });
+}
+function createSource(buffer) {
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    return source;
 }
 
 async function initializeAndPlayTracks() {
@@ -60,3 +72,21 @@ async function initializeAndPlayTracks() {
     }
     await togglePlayPause();
 }
+
+async function stopTracks() {
+    if (audioContext) {
+        tracks.forEach(track => {
+            if (track.source) {
+                track.source.stop();
+                track.source = null;
+            }
+        });
+        await audioContext.close();
+        audioContext = null;
+        tracks = [];
+        isPlaying = false;
+        currentTrackTime = 0;
+    }
+}
+
+
