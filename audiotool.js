@@ -72,9 +72,6 @@ function handleTrackEnd() {
 }
 
 async function initializeAndPlayTracks() {
-    if (tracks.length === 0) {
-        await loadAllTracks(trackSources);
-    }
     await togglePlayPause();
 }
 
