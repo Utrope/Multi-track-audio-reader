@@ -44,5 +44,10 @@
     <button onclick="decreaseVolume(5)">-</button>
 </div>
 <script src="audiotool.js"></script>
+<script>
+    window.onload = function() {
+        preloadAllTracks(trackSources);
+    }
+</script>
 </body>
 </html>

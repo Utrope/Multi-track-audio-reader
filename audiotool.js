@@ -151,12 +151,8 @@ async function stopTracks() {
                 track.source = null;
             }
         });
-        await audioContext.close();
-        audioContext = null;
-        tracks = [];
         isPlaying = false;
         currentTrackTime = 0;
-        isTracksLoaded = false;
     }
 }
 
