@@ -7,6 +7,10 @@ const trackSources = ['./MashupCutBass.m4a', './MashupCutDrums.m4a', './MashupCu
 './MashupCutOther.m4a', './MashupCutPiano.m4a', './MashupCutVocals.m4a'];
 let isPlaying = false;
 
+const VOLUME_STEP = 0.1; // Step value for volume increase/decrease
+const MAX_VOLUME = 1.0; // Maximum volume level
+const MIN_VOLUME = 0.0; // Minimum volume level
+
 // Load a single track and return the decoded audio buffer
 async function loadTrack(trackPath) {
     try {
@@ -24,6 +28,24 @@ function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     track.gainNode.gain.value = track.isMuted ? 1 : 0;
     track.isMuted = !track.isMuted;
+}
+
+// Set the volume for a specific track
+function setVolume(trackIndex, volume) {
+    const track = tracks[trackIndex];
+    track.gainNode.gain.value = Math.min(Math.max(volume, MIN_VOLUME), MAX_VOLUME);
+}
+
+// Increase the volume for a specific track
+function increaseVolume(trackIndex) {
+    const track = tracks[trackIndex];
+    setVolume(trackIndex, track.gainNode.gain.value + VOLUME_STEP);
+}
+
+// Decrease the volume for a specific track
+function decreaseVolume(trackIndex) {
+    const track = tracks[trackIndex];
+    setVolume(trackIndex, track.gainNode.gain.value - VOLUME_STEP);
 }
 
 // Toggle play/pause for all tracks
@@ -60,6 +82,7 @@ async function resumeAudioContext() {
 // Create a track object with buffer and gain node
 function createTrack(buffer) {
     const gainNode = audioContext.createGain();
+    gainNode.gain.value = 1.0; // Set initial volume to max
     return { buffer, gainNode, isMuted: false, source: null};
 }
 
@@ -122,6 +145,20 @@ async function stopTracks() {
         isPlaying = false;
         currentTrackTime = 0;
     }
+}
+
+// Increase the volume for all tracks
+function increaseAllVolumes() {
+    tracks.forEach((track, index) => {
+        setVolume(index, track.gainNode.gain.value + VOLUME_STEP);
+    });
+}
+
+// Decrease the volume for all tracks
+function decreaseAllVolumes() {
+    tracks.forEach((track, index) => {
+        setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
+    });
 }
 
 

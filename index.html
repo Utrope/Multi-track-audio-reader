@@ -9,23 +9,39 @@
     <button onclick="initializeAndPlayTracks()">Play/Pause Tracks</button>
     <button onclick="stopTracks()">Stop Tracks</button>
 
+    <!-- Buttons for controlling all tracks-->
+    <button onclick="increaseAllVolumes()">Increase Volume for All Tracks</button>
+    <button onclick="decreaseAllVolumes()">Decrease Volume for All Tracks</button>
+    
     <h3>Basse</h3>
     <button onclick="toggleMute(0)">Mute/Unmute Bass</button>
+    <button onclick="increaseVolume(0)">+</button>
+    <button onclick="decreaseVolume(0)">-</button>
     
     <h3>Batterie</h3>
     <button onclick="toggleMute(1)">Mute/Unmute Drums</button>
+    <button onclick="increaseVolume(1)">+</button>
+    <button onclick="decreaseVolume(1)">-</button>
     
     <h3>Guitare</h3>
     <button onclick="toggleMute(2)">Mute/Unmute Guitar</button>
+    <button onclick="increaseVolume(2)">+</button>
+    <button onclick="decreaseVolume(2)">-</button>
     
     <h3>Autres</h3>
     <button onclick="toggleMute(3)">Mute/Unmute Other</button>
+    <button onclick="increaseVolume(3)">+</button>
+    <button onclick="decreaseVolume(3)">-</button>
     
     <h3>Piano</h3>
     <button onclick="toggleMute(4)">Mute/Unmute Piano</button>
+    <button onclick="increaseVolume(4)">+</button>
+    <button onclick="decreaseVolume(4)">-</button>
     
     <h3>Voix</h3>
     <button onclick="toggleMute(5)">Mute/Unmute Vocals</button>
+    <button onclick="increaseVolume(5)">+</button>
+    <button onclick="decreaseVolume(5)">-</button>
 </div>
 <script src="audiotool.js"></script>
 </body>
