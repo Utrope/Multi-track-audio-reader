@@ -11,6 +11,14 @@ const VOLUME_STEP = 0.1; // Step value for volume increase/decrease
 const MAX_VOLUME = 1.0; // Maximum volume level
 const MIN_VOLUME = 0.0; // Minimum volume level
 
+let isTracksLoaded = false; // Flag to check if tracks are loaded
+
+async function initAudioContext() {
+    if (!audioContext || audioContext.state == 'closed') {
+        audioContext =  new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
 // Load a single track and return the decoded audio buffer
 async function loadTrack(trackPath) {
     try {
@@ -18,9 +26,18 @@ async function loadTrack(trackPath) {
     const arrayBuffer = await response.arrayBuffer();
     return await audioContext.decodeAudioData(arrayBuffer);
     } catch (error) {
-        console.error('Failed to load track: ${trackPath}', error);
+        console.error(`Failed to load track: ${trackPath}`, error);
         throw error;
     }
+}
+
+// Preload and decode all tracks on page load
+async function preloadAllTracks(trackSources) {
+    await initAudioContext();
+    const bufferPromises = trackSources.map(loadTrack);
+    const buffers = await Promise.all(bufferPromises);
+    tracks = buffers.map(buffer => createTrack(buffer));
+    isTracksLoaded = true;
 }
 
 // Toggle mute/unmute for a specific track
@@ -38,14 +55,12 @@ function setVolume(trackIndex, volume) {
 
 // Increase the volume for a specific track
 function increaseVolume(trackIndex) {
-    const track = tracks[trackIndex];
-    setVolume(trackIndex, track.gainNode.gain.value + VOLUME_STEP);
+    setVolume(trackIndex, tracks[trackIndex].gainNode.gain.value + VOLUME_STEP);
 }
 
 // Decrease the volume for a specific track
 function decreaseVolume(trackIndex) {
-    const track = tracks[trackIndex];
-    setVolume(trackIndex, track.gainNode.gain.value - VOLUME_STEP);
+    setVolume(trackIndex, tracks[trackIndex].gainNode.gain.value - VOLUME_STEP);
 }
 
 // Toggle play/pause for all tracks
@@ -64,9 +79,7 @@ async function togglePlayPause() {
 
 // Load and decode all tracks
 async function loadAllTracks(trackSources) {
-    if (!audioContext || audioContext.state === 'closed') {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    await initAudioContext();
     const bufferPromises = trackSources.map(trackPath => loadTrack(trackPath));
     const buffers = await Promise.all(bufferPromises);
     tracks = buffers.map(buffer => createTrack(buffer));
@@ -101,8 +114,9 @@ function startAllTracks() {
             track.source = createSource(track.buffer);
             track.source.connect(track.gainNode);
             track.gainNode.connect(audioContext.destination);
+            track.source.start(0, currentTrackTime);
+
         }
-        track.source.start(0, currentTrackTime);
     });
     startTime = audioContext.currentTime - currentTrackTime;
     isPlaying = true;
@@ -122,6 +136,9 @@ function handleTrackEnd() {
 
 // Initialize and start playing tracks
 async function initializeAndPlayTracks() {
+    if (!isTracksLoaded) {
+        await preloadAllTracks(trackSources);
+    }
     await togglePlayPause();
 }
 
@@ -139,6 +156,7 @@ async function stopTracks() {
         tracks = [];
         isPlaying = false;
         currentTrackTime = 0;
+        isTracksLoaded = false;
     }
 }
 
@@ -156,4 +174,16 @@ function decreaseAllVolumes() {
     });
 }
 
+// Error handler to wrap async functions
+function handleErrors(fn) {
+    return function(...params) {
+        return fn(...params).catch(error => {
+            console.error('An error occurred:', error);
+        });
+    }
+}
 
+initializeAndPlayTracks = handleErrors(initializeAndPlayTracks);
+togglePlayPause = handleErrors(togglePlayPause);
+stopTracks = handleErrors(stopTracks);
+preloadAllTracks = handleErrors(preloadAllTracks);
