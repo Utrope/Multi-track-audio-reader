@@ -109,14 +109,9 @@ function startAllTracks() {
 }
 
 // Pause all tracks and store the current playback time
-function pauseAllTracks() {
+async function pauseAllTracks() {
     currentTrackTime = audioContext.currentTime - startTime;
-    tracks.forEach(track => {
-        if (track.source) {
-            track.source.stop();
-            track.source = null;
-        }
-    });
+    await audioContext.suspend();
     isPlaying = false;
 }
 
