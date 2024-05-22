@@ -43,7 +43,12 @@ async function preloadAllTracks(trackSources) {
 // Toggle mute/unmute for a specific track
 function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
-    track.gainNode.gain.value = track.isMuted ? 1 : 0;
+    if (track.isMuted) {
+        track.gainNode.gain.value = track.previousVolume;
+    } else {
+        track.previousVolume = track.gainNode.gain.value;
+        track.gainNode.gain.value = 0; // Mute the track
+    }
     track.isMuted = !track.isMuted;
 }
 
@@ -96,7 +101,7 @@ async function resumeAudioContext() {
 function createTrack(buffer) {
     const gainNode = audioContext.createGain();
     gainNode.gain.value = 1.0; // Set initial volume to max
-    return { buffer, gainNode, isMuted: false, source: null};
+    return { buffer, gainNode, isMuted: false, source: null, previousVolume: 1.0};
 }
 
 // Create a source node from the buffer and handle the track end
