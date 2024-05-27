@@ -13,7 +13,7 @@ const MIN_VOLUME = 0.0; // Minimum volume level
 
 let isTracksLoaded = false; // Flag to check if tracks are loaded
 
-async function initAudioContext() {
+export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
         audioContext =  new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -32,7 +32,7 @@ async function loadTrack(trackPath) {
 }
 
 // Preload and decode all tracks on page load
-async function preloadAllTracks(trackSources) {
+export async function preloadAllTracks(trackSources) {
     await initAudioContext();
     const bufferPromises = trackSources.map(loadTrack);
     const buffers = await Promise.all(bufferPromises);
@@ -41,7 +41,7 @@ async function preloadAllTracks(trackSources) {
 }
 
 // Toggle mute/unmute for a specific track
-function toggleMute(trackIndex) {
+export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     if (track.isMuted) {
         track.gainNode.gain.value = track.previousVolume;
@@ -53,10 +53,17 @@ function toggleMute(trackIndex) {
 }
 
 // Set the volume for a specific track
-function setVolume(trackIndex, volume) {
+export function setVolume(trackIndex, volume) {
     const track = tracks[trackIndex];
-    track.gainNode.gain.value = Math.min(Math.max(volume, MIN_VOLUME), MAX_VOLUME);
+    track.gainNode.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
 }
+
+export function setAllVolumes(volume) {
+    tracks.forEach(track => {
+        track.gainNode.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
+}
+)};
+
 
 // Increase the volume for a specific track
 function increaseVolume(trackIndex) {
@@ -69,7 +76,7 @@ function decreaseVolume(trackIndex) {
 }
 
 // Toggle play/pause for all tracks
-async function togglePlayPause() {
+export async function togglePlayPause() {
     if (!audioContext || audioContext.state == 'closed') {
         await loadAllTracks(trackSources); 
     }
@@ -148,7 +155,7 @@ async function initializeAndPlayTracks() {
 }
 
 // Stop all tracks and reset the audio context
-async function stopTracks() {
+export async function stopTracks() {
     if (audioContext) {
         tracks.forEach(track => {
             if (track.source) {
@@ -162,14 +169,14 @@ async function stopTracks() {
 }
 
 // Increase the volume for all tracks
-function increaseAllVolumes() {
+export function increaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value + VOLUME_STEP);
     });
 }
 
 // Decrease the volume for all tracks
-function decreaseAllVolumes() {
+export function decreaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
     });
