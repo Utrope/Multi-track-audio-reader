@@ -59,7 +59,12 @@ export function toggleMute(trackIndex) {
 // Set the volume for a specific track
 export function setVolume(trackIndex, volume) {
     const track = tracks[trackIndex];
+    if (track.isMuted && volume > 0) {
+        // Unmute the track if volume is set to a non-zero value
+        track.isMuted = false;
+    }
     track.gainNode.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
+    track.previousVolume = track.gainNode.gain.value; // Update previous volume
 }
 
 export function setAllVolumes(volume) {
