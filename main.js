@@ -56,7 +56,7 @@ function createTrackControls(numTracks) {
         <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
         </div>
         <div class="play-pause-button">
-        <button onclick="handlePlayPause()" id="playPauseButton"}>Play</button>
+        <button onclick="handlePlayPause()" id="playPauseButton"}>Play/Pause</button>
         </div>
         <button onclick="stopTrack()" class="stop-button">Stop</button>
     `;
@@ -67,13 +67,11 @@ function createTrackControls(numTracks) {
   
   window.handlePlayPause = async () => {
     await togglePlayPause();
-    const playPauseButton = document.getElementById(`playPauseButton`);
-    playPauseButton.textContent = playPauseButton.textContent === 'Play' ? 'Pause' : 'Play';
   };
   
   window.stopTrack = () => {
     stopTracks();
-    document.getElementById(`playPauseButton-${trackIndex}`).textContent = 'Play';
+    document.getElementById(`playPauseButton`).textContent = 'Play';
   };
   
   window.toggleMute = toggleMute;

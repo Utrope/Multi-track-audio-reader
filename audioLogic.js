@@ -43,14 +43,18 @@ export async function preloadAllTracks(trackSources) {
 // Toggle mute/unmute for a specific track
 export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
+    const slider = document.getElementById(`volume-slider-${trackIndex}`);
     if (track.isMuted) {
         track.gainNode.gain.value = track.previousVolume;
+        slider.value = track.previousVolume * 100; // Restore previous volume to slider
     } else {
         track.previousVolume = track.gainNode.gain.value;
-        track.gainNode.gain.value = 0; // Mute the track
+        track.gainNode.gain.value = 0;
+        slider.value = 0; // Set slider to 0
     }
     track.isMuted = !track.isMuted;
 }
+
 
 // Set the volume for a specific track
 export function setVolume(trackIndex, volume) {

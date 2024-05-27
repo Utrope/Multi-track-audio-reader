@@ -24,6 +24,11 @@ body {
     align-items: center;
 }
 
+.track-title {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
 .track-buttons {
     display: flex;
     flex-direction: column;
