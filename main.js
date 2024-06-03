@@ -71,7 +71,6 @@ function createTrackControls(numTracks) {
   
   window.stopTrack = () => {
     stopTracks();
-    document.getElementById(`playPauseButton`).textContent = 'Play';
   };
   
   window.toggleMute = toggleMute;
