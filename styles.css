@@ -22,17 +22,83 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 10px;
 }
 
-.track-title {
-    font-size: 1.2em;
-    margin-bottom: 10px;
+.track-title-image {
+    width: 50px;
+    height: auto;
+    display: block;
+    margin: 20px auto 25px auto;
+}
+
+.upper-part {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.left-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 50%;
+}
+
+.left-buttons img 
+{
+    margin: 0;
+    padding: 0;
+}
+
+.lower-part {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+
+.volume-control {
+    display: flex;
+    align-items: right;
+    justify-content: right;
+    margin-left: 50%;
+    height: 200px;
+}
+
+.volume-control input[type="range"] {
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    width: 8px;
+    height: 100%;
+}
+
+.mute-button {
+    width: 80px;
+    cursor: pointer;
+    display: block;
+}
+
+.play-pause-button img {
+    width: 120px;
+    cursor: pointer;
+    display: block;
+}
+
+.stop-button img {
+    width: 20px;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 0;
 }
 
 .track-buttons {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 
 .track-button {
@@ -44,34 +110,12 @@ body {
     color: #ffffff;
 }
 
-.track-button.cyan { background-color: cyan; }
-.track-button.green { background-color: green; }
-.track-button.yellow { background-color: yellow; }
-.track-button.red { background-color: red; }
-
-.volume-control {
-    margin-bottom: 20px;
-}
-
-.track-title-image {
-    width: 50px;
-    height: auto;
-    display: block;
-    margin: 0 auto 10px auto;
-}
-
-.play-pause-button img, .stop-button img, .mute-button {
-    width: 80px;
-    height: 80px;
-    cursor: pointer;
-    display: block;
-    margin: 0 auto 20px auto;
-}
-
 .stop-button img {
     margin-bottom: 0;
 }
 
+
 .track-button img.mute-button {
     margin: 5px auto;
+    width: 50%;
 }
