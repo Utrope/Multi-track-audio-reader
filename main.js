@@ -10,12 +10,12 @@ const trackSources = [
 ];
 
 const trackNames = [
-    'Bass',
-    'Drums',
-    'Guitar',
-    'Other',
-    'Piano',
-    'Vocals'
+    'bass.png',
+    'drums.png',
+    'guitar.png',
+    'other.png',
+    'piano.png',
+    'vocals.png'
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -33,7 +33,9 @@ function createTrackControls(numTracks) {
         trackControl.id = `track-${i}`;
 
         trackControl.innerHTML = `
-        <div class="track-title">${trackNames[i]}</div>
+        <div class="track-title">
+        <img src="images/${trackNames[i]}" alt="${trackNames[i].split('.')[0]}" class="track-title-image">
+        </div>
         <div class="track-buttons">
           <img src="images/mute_button.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
         </div>
