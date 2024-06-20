@@ -53,21 +53,18 @@ body {
     margin-bottom: 20px;
 }
 
-.play-pause-button button {
-    padding: 15px 30px;
-    background-color: teal;
-    border: none;
-    border-radius: 50%;
+.play-pause-button img, .stop-button img, .mute-button {
+    width: 80px;
+    height: 80px;
     cursor: pointer;
-    color: #ffffff;
-    margin-bottom: 20px;
+    display: block;
+    margin: 0 auto 20px auto;
 }
 
-.stop-button {
-    padding: 10px 20px;
-    background-color: white;
-    color: black;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+.stop-button img {
+    margin-bottom: 0;
+}
+
+.track-button img.mute-button {
+    margin: 5px auto;
 }

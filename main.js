@@ -35,7 +35,7 @@ function createTrackControls(numTracks) {
         trackControl.innerHTML = `
         <div class="track-title">${trackNames[i]}</div>
         <div class="track-buttons">
-          <button class="track-button red" onclick="toggleMute(${i})">MUTE</button>
+          <img src="images/mute_button.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
         </div>
         <div class="volume-control">
           <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" onchange="setVolume(${i}, this.value)">
@@ -49,17 +49,18 @@ function createTrackControls(numTracks) {
         generalTrackControl.className = 'general-track-control';
 
         generalTrackControl.innerHTML = `
-        <div class="track-title">General</div>
-        <div class="track-buttons">
-        </div>
-        <div class="volume-control">
+      <div class="track-title">General</div>
+      <div class="track-buttons"></div>
+      <div class="volume-control">
         <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
-        </div>
-        <div class="play-pause-button">
-        <button onclick="handlePlayPause()" id="playPauseButton"}>Play/Pause</button>
-        </div>
-        <button onclick="stopTrack()" class="stop-button">Stop</button>
-    `;
+      </div>
+      <div class="play-pause-button">
+        <img src="images/play_pause_button.png" alt="Play/Pause" onclick="handlePlayPause()" id="playPauseButton" style="cursor: pointer;">
+      </div>
+      <div class="stop-button">
+        <img src="images/stop_button.png" alt="Stop" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
+      </div>
+      `;
 
   container.appendChild(generalTrackControl);
 }
