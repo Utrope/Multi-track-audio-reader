@@ -12,6 +12,7 @@ const MAX_VOLUME = 1.0; // Maximum volume level
 const MIN_VOLUME = 0.0; // Minimum volume level
 
 let isTracksLoaded = false; // Flag to check if tracks are loaded
+let lastSoloedTrackIndex = null;
 
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
@@ -136,7 +137,6 @@ function startAllTracks() {
             track.source.connect(track.gainNode);
             track.gainNode.connect(audioContext.destination);
             track.source.start(0, currentTrackTime);
-
         }
     });
     startTime = audioContext.currentTime - currentTrackTime;
@@ -189,6 +189,40 @@ export function decreaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
     });
+}
+
+// Toggle solo for a specific track
+export function toggleSolo(trackIndex) {
+    const track = tracks[trackIndex];
+
+    if (track.isSolo) {
+        track.isSolo = false;
+        lastSoloedTrackIndex = null;
+
+        tracks.forEach(t => {
+            t.isMuted = false;
+            t.gainNode.gain.value = t.previousVolume;
+        });
+    } else {
+        if (lastSoloedTrackIndex !== null && lastSoloedTrackIndex !== trackIndex) {
+            tracks[lastSoloedTrackIndex].isSolo = false;
+            tracks[lastSoloedTrackIndex].isMuted = false;
+            tracks[lastSoloedTrackIndex].gainNode.gain.value = tracks[lastSoloedTrackIndex].previousVolume;
+        }
+
+        track.isSolo = true;
+        lastSoloedTrackIndex = trackIndex;
+
+        tracks.forEach((t, i) => {
+            if (i !== trackIndex) {
+                t.isMuted = true;
+                t.gainNode.gain.value = 0;
+            } else {
+                t.isMuted = false;
+                t.gainNode.gain.value = t.previousVolume;
+            }
+        });
+    }
 }
 
 // Error handler to wrap async functions
