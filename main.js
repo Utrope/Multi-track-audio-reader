@@ -38,10 +38,10 @@ function createTrackControls(numTracks) {
         </div>
         <div class="upper-part">
           <div class="left-buttons">
-            <img src="images/track_button.png" alt="Track" class="track-button mute-button" onclick="" id="muteButton-${i}" style="cursor: pointer;">
-            <img src="images/fx_button.png" alt="FX" class="track-button mute-button" onclick="" id="muteButton-${i}" style="cursor: pointer;">
-            <img src="images/solo_button.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="muteButton-${i}" style="cursor: pointer;">
-            <img src="images/mute_button.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
+            <img src="images/track_button_off.png" alt="Track" class="track-button mute-button" onclick="" id="trackButton" style="cursor: pointer;">
+            <img src="images/fx_button_off.png" alt="FX" class="track-button mute-button" onclick="" id="fxButton" style="cursor: pointer;">
+            <img src="images/solo_button_off.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
+            <img src="images/mute_button_off.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
             <img src="images/stop_button.png" alt="Stop" class="track-button mute-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
             </div>
           <div class="volume-control">

@@ -45,13 +45,20 @@ export async function preloadAllTracks(trackSources) {
 export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     const slider = document.getElementById(`volume-slider-${trackIndex}`);
+    const muteButton = document.getElementById(`muteButton-${trackIndex}`);
+
+    const muteEnabledImage = "images/mute_button.png";
+    const muteDisabledImage = "images/mute_button_off.png";
+    
     if (track.isMuted) {
         track.gainNode.gain.value = track.previousVolume;
         slider.value = track.previousVolume * 100; // Restore previous volume to slider
+        muteButton.src = muteDisabledImage;
     } else {
         track.previousVolume = track.gainNode.gain.value;
         track.gainNode.gain.value = 0;
         slider.value = 0; // Set slider to 0
+        muteButton.src = muteEnabledImage;
     }
     track.isMuted = !track.isMuted;
 }
@@ -194,24 +201,35 @@ export function decreaseAllVolumes() {
 // Toggle solo for a specific track
 export function toggleSolo(trackIndex) {
     const track = tracks[trackIndex];
+    const soloButton = document.getElementById(`soloButton-${trackIndex}`);
 
+    const soloEnabledImage = "images/solo_button.png";
+    const soloDisabledImage = "images/solo_button_off.png";
+    
     if (track.isSolo) {
         track.isSolo = false;
         lastSoloedTrackIndex = null;
+        soloButton.src = soloDisabledImage;
 
         tracks.forEach(t => {
-            t.isMuted = false;
-            t.gainNode.gain.value = t.previousVolume;
+            t.gainNode.gain.value = t.previousVolume;        
+            const previousSoloButton = document.getElementById(`soloButton-${lastSoloedTrackIndex}`);
+            if (previousSoloButton) {
+                previousSoloButton.src = soloDisabledImage;
+            }
         });
     } else {
         if (lastSoloedTrackIndex !== null && lastSoloedTrackIndex !== trackIndex) {
+            const lastSoloButton = document.getElementById(`soloButton-${lastSoloedTrackIndex}`);
             tracks[lastSoloedTrackIndex].isSolo = false;
             tracks[lastSoloedTrackIndex].isMuted = false;
             tracks[lastSoloedTrackIndex].gainNode.gain.value = tracks[lastSoloedTrackIndex].previousVolume;
-        }
+            lastSoloButton.src = soloDisabledImage;
+        }   
 
         track.isSolo = true;
         lastSoloedTrackIndex = trackIndex;
+        soloButton.src = soloEnabledImage;
 
         tracks.forEach((t, i) => {
             if (i !== trackIndex) {
