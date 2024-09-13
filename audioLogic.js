@@ -205,25 +205,24 @@ export function toggleSolo(trackIndex) {
 
     const soloEnabledImage = "images/solo_button.png";
     const soloDisabledImage = "images/solo_button_off.png";
-    
+   
     if (track.isSolo) {
         track.isSolo = false;
         lastSoloedTrackIndex = null;
         soloButton.src = soloDisabledImage;
 
-        tracks.forEach(t => {
-            t.gainNode.gain.value = t.previousVolume;        
-            const previousSoloButton = document.getElementById(`soloButton-${lastSoloedTrackIndex}`);
-            if (previousSoloButton) {
-                previousSoloButton.src = soloDisabledImage;
+        tracks.forEach((t,i) => {
+            if (t.isMuted)
+            {
+                toggleMute(i);  
             }
         });
-    } else {
+    } else
+    {
         if (lastSoloedTrackIndex !== null && lastSoloedTrackIndex !== trackIndex) {
             const lastSoloButton = document.getElementById(`soloButton-${lastSoloedTrackIndex}`);
             tracks[lastSoloedTrackIndex].isSolo = false;
-            tracks[lastSoloedTrackIndex].isMuted = false;
-            tracks[lastSoloedTrackIndex].gainNode.gain.value = tracks[lastSoloedTrackIndex].previousVolume;
+            toggleMute(lastSoloedTrackIndex);
             lastSoloButton.src = soloDisabledImage;
         }   
 
@@ -232,15 +231,12 @@ export function toggleSolo(trackIndex) {
         soloButton.src = soloEnabledImage;
 
         tracks.forEach((t, i) => {
-            if (i !== trackIndex) {
-                t.isMuted = true;
-                t.gainNode.gain.value = 0;
-            } else {
-                t.isMuted = false;
-                t.gainNode.gain.value = t.previousVolume;
-            }
-        });
-    }
+            {
+                if ((i != trackIndex && !t.isMuted) || (i == trackIndex && t.isMuted))
+                    toggleMute(i)
+        }   
+    });
+}
 }
 
 // Error handler to wrap async functions
