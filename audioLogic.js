@@ -97,7 +97,7 @@ export async function togglePlayPause() {
     if (!audioContext || audioContext.state == 'closed') {
         await loadAllTracks(trackSources); 
     }
-
+    
     if (!isPlaying) {
         await resumeAudioContext();
         startAllTracks();
@@ -173,10 +173,14 @@ async function initializeAndPlayTracks() {
 // Stop all tracks and reset the audio context
 export async function stopTracks() {
     if (audioContext) {
-        tracks.forEach(track => {
+        tracks.forEach((track, index) => {
             if (track.source) {
                 track.source.stop();
                 track.source = null;
+                if (track.isSolo)
+                    toggleSolo(index);
+                if (track.isMuted)
+                    toggleMute(index);
             }
         });
         isPlaying = false;
@@ -237,6 +241,17 @@ export function toggleSolo(trackIndex) {
         }   
     });
 }
+}
+
+export function toggleLocalTrackPlayPause(trackIndex)
+{
+    const track = tracks[trackIndex];
+
+    if (!isPlaying || track.isSolo)
+        togglePlayPause();
+
+    if (!track.isSolo)
+        toggleSolo(trackIndex);
 }
 
 // Error handler to wrap async functions

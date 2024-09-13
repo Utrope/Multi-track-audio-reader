@@ -1,4 +1,4 @@
-import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, setAllVolumes, toggleMute, setVolume, toggleSolo } from './audioLogic.js';
+import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, toggleMute, setVolume, toggleSolo } from './audioLogic.js';
 
 const trackSources = [
     './MashupCutBass.m4a',
@@ -50,7 +50,7 @@ function createTrackControls(numTracks) {
         </div>
         <div class="lower-part">
         <div class="play-pause-button">
-          <img src="images/play_pause_button.png" alt="Play/Pause" onclick="handlePlayPause()" id="playPauseButton" style="cursor: pointer;">
+          <img src="images/play_pause_button.png" alt="Play/Pause" onclick="handleLocalTrackPlayPause(${i})" id="playPauseButton-${i}" style="cursor: pointer;">
         </div>
       </div>
     `;
@@ -104,3 +104,7 @@ function createTrackControls(numTracks) {
 window.toggleSolo = (trackIndex) => {
   toggleSolo(trackIndex);
 };
+
+window.handleLocalTrackPlayPause = (trackIndex) => {
+  toggleLocalTrackPlayPause(trackIndex);
+}
