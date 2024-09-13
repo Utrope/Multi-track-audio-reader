@@ -12,6 +12,7 @@ const MAX_VOLUME = 1.0; // Maximum volume level
 const MIN_VOLUME = 0.0; // Minimum volume level
 
 let isTracksLoaded = false; // Flag to check if tracks are loaded
+let lastSoloedTrackIndex = null;
 
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
@@ -44,13 +45,20 @@ export async function preloadAllTracks(trackSources) {
 export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     const slider = document.getElementById(`volume-slider-${trackIndex}`);
+    const muteButton = document.getElementById(`muteButton-${trackIndex}`);
+
+    const muteEnabledImage = "images/mute_button.png";
+    const muteDisabledImage = "images/mute_button_off.png";
+    
     if (track.isMuted) {
         track.gainNode.gain.value = track.previousVolume;
         slider.value = track.previousVolume * 100; // Restore previous volume to slider
+        muteButton.src = muteDisabledImage;
     } else {
         track.previousVolume = track.gainNode.gain.value;
         track.gainNode.gain.value = 0;
         slider.value = 0; // Set slider to 0
+        muteButton.src = muteEnabledImage;
     }
     track.isMuted = !track.isMuted;
 }
@@ -136,7 +144,6 @@ function startAllTracks() {
             track.source.connect(track.gainNode);
             track.gainNode.connect(audioContext.destination);
             track.source.start(0, currentTrackTime);
-
         }
     });
     startTime = audioContext.currentTime - currentTrackTime;
@@ -189,6 +196,47 @@ export function decreaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
     });
+}
+
+// Toggle solo for a specific track
+export function toggleSolo(trackIndex) {
+    const track = tracks[trackIndex];
+    const soloButton = document.getElementById(`soloButton-${trackIndex}`);
+
+    const soloEnabledImage = "images/solo_button.png";
+    const soloDisabledImage = "images/solo_button_off.png";
+   
+    if (track.isSolo) {
+        track.isSolo = false;
+        lastSoloedTrackIndex = null;
+        soloButton.src = soloDisabledImage;
+
+        tracks.forEach((t,i) => {
+            if (t.isMuted)
+            {
+                toggleMute(i);  
+            }
+        });
+    } else
+    {
+        if (lastSoloedTrackIndex !== null && lastSoloedTrackIndex !== trackIndex) {
+            const lastSoloButton = document.getElementById(`soloButton-${lastSoloedTrackIndex}`);
+            tracks[lastSoloedTrackIndex].isSolo = false;
+            toggleMute(lastSoloedTrackIndex);
+            lastSoloButton.src = soloDisabledImage;
+        }   
+
+        track.isSolo = true;
+        lastSoloedTrackIndex = trackIndex;
+        soloButton.src = soloEnabledImage;
+
+        tracks.forEach((t, i) => {
+            {
+                if ((i != trackIndex && !t.isMuted) || (i == trackIndex && t.isMuted))
+                    toggleMute(i)
+        }   
+    });
+}
 }
 
 // Error handler to wrap async functions
