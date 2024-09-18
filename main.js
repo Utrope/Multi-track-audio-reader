@@ -1,10 +1,10 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, toggleMute, setVolume, toggleSolo } from './audioLogic.js';
 
 const trackSources = [
-    './tracks/bass_lvl1.wav',
-    './tracks/drum_lvl1.wav',
-    './tracks/guitar_lvl1.wav',
-    './tracks/prod.wav',
+    './bass_lvl1.wav',
+    './drum_lvl1.wav',
+    './guitar_lvl1.wav',
+    './prod.wav',
 ];
 
 const trackNames = [
