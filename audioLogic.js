@@ -3,8 +3,8 @@ let currentTrackTime = 0;
 let startTime = 0; 
 let tracks = [];
 
-const trackSources = ['./MashupCutBass.m4a', './MashupCutDrums.m4a', './MashupCutGuitar.m4a',
-'./MashupCutOther.m4a', './MashupCutPiano.m4a', './MashupCutVocals.m4a'];
+const trackSources = ['./tracks/bass_lvl1.mp3', './tracks/drums_lvl1.mp3', './tracks/guitar_lvl1.mp3',
+'./tracks/prod.mp3', './tracks/trombone_lvl1.mp3', './tracks/trompette_lvl1.mp3'];
 let isPlaying = false;
 
 const VOLUME_STEP = 0.1; // Step value for volume increase/decrease

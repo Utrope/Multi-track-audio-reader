@@ -1,10 +1,12 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, toggleMute, setVolume, toggleSolo } from './audioLogic.js';
 
 const trackSources = [
-    './tracks/bass_lvl1.wav',
-    './tracks/drum_lvl1.wav',
-    './tracks/guitar_lvl1.wav',
-    './tracks/prod.wav',
+    './tracks/bass_lvl1.mp3',
+    './tracks/drums_lvl1.mp3',
+    './tracks/guitar_lvl1.mp3',
+    './tracks/trombone_lvl1.mp3',
+    './tracks/trompette_lvl1.mp3',
+    './tracks/prod.mp3',
 ];
 
 const trackNames = [
@@ -12,6 +14,8 @@ const trackNames = [
     'drums.png',
     'guitar.png',
     'other.png',
+    'other.png',
+    'other.png'
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
