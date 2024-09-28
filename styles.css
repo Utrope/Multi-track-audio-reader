@@ -138,8 +138,14 @@ body, html {
     margin-bottom: 0;
 }
 
-
 .track-button img.mute-button {
     margin: 5px auto;
     width: 50%;
+}
+
+.level-button {
+    width: 50px;
+    cursor: pointer;
+    display: block;
+    margin: 5px auto;
 }

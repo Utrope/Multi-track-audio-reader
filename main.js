@@ -1,4 +1,5 @@
-import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, toggleMute, setVolume, toggleSolo } from './audioLogic.js';
+import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
+  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels } from './audioLogic.js';
 
 const trackSources = [
     './tracks/bass_lvl1.mp3',
@@ -32,6 +33,8 @@ function createTrackControls(numTracks) {
         trackControl.className = 'track-control';
         trackControl.id = `track-${i}`;
 
+        const initialLevelImage = `images/lvl${initialLevels[i]}.png`;
+
         trackControl.innerHTML = `
         <div class="track-title">
         <img src="images/${trackNames[i]}" alt="${trackNames[i].split('.')[0]}" class="track-title-image">
@@ -42,7 +45,7 @@ function createTrackControls(numTracks) {
             <img src="images/fx_button_off.png" alt="FX" class="track-button mute-button" onclick="" id="fxButton" style="cursor: pointer;">
             <img src="images/solo_button_off.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
             <img src="images/mute_button_off.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
-            <img src="images/stop_button.png" alt="Stop" class="track-button mute-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
+            <img src="${initialLevelImage}" alt="Level" class="track-button level-button" onclick="switchTrackLevel(${i})" id="levelButton-${i}" style="cursor: pointer;">
             </div>
           <div class="volume-control">
             <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" onchange="setVolume(${i}, this.value)">
@@ -107,4 +110,8 @@ window.toggleSolo = (trackIndex) => {
 
 window.handleLocalTrackPlayPause = (trackIndex) => {
   toggleLocalTrackPlayPause(trackIndex);
+}
+
+window.switchTrackLevel = (trackIndex) => {
+  switchTrackLevel(trackIndex);
 }
