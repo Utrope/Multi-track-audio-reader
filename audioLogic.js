@@ -3,8 +3,14 @@ let currentTrackTime = 0;
 let startTime = 0; 
 let tracks = [];
 
-const trackSources = ['./tracks/bass_lvl1.mp3', './tracks/drums_lvl1.mp3', './tracks/guitar_lvl1.mp3',
-'./tracks/prod.mp3', './tracks/trombone_lvl1.mp3', './tracks/trompette_lvl1.mp3'];
+const trackSources = [
+    './tracks/bass_lvl1.mp3',
+    './tracks/drums_lvl1.mp3',
+    './tracks/guitar_lvl1.mp3',
+    './tracks/trombone_lvl1.mp3',
+    './tracks/trompette_lvl1.mp3',
+    './tracks/prod.mp3',
+];
 let isPlaying = false;
 
 const VOLUME_STEP = 0.1; // Step value for volume increase/decrease
@@ -13,6 +19,26 @@ const MIN_VOLUME = 0.0; // Minimum volume level
 
 let isTracksLoaded = false; // Flag to check if tracks are loaded
 let lastSoloedTrackIndex = null;
+
+const maxLevels = [
+    3,
+    4,
+    3,
+    3,
+    3,
+    4
+];
+
+export const initialLevels = [
+    1,
+    1,
+    1,
+    1,
+    1,
+    4
+]
+
+const currentLevels = [...initialLevels];
 
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
@@ -254,12 +280,66 @@ export function toggleLocalTrackPlayPause(trackIndex)
         toggleSolo(trackIndex);
 }
 
+export async function switchTrackLevel(trackIndex) {    
+    const originalTrackPath = trackSources[trackIndex];
+
+    if (!originalTrackPath.includes('_lvl')) {
+        return;
+    }
+
+    let nextLevel = currentLevels[trackIndex] + 1;
+    if (nextLevel > maxLevels[trackIndex]) {
+        nextLevel = 1;
+    }
+
+    const levelTrackPath = originalTrackPath.replace(`_lvl1`, `_lvl${nextLevel}`);
+    const exists = await fileExists(levelTrackPath);
+
+    if (!exists)
+        return;
+
+    const levelBuffer = await loadTrack(levelTrackPath);
+    const track = tracks[trackIndex];
+
+    if (track.source) 
+    {
+        const currentPlaybackTime = audioContext.currentTime - startTime;
+
+        track.source.disconnect();
+        track.source = null;
+
+        track.buffer = levelBuffer;
+        track.source = createSource(track.buffer);
+
+        track.source.connect(track.gainNode);
+        track.gainNode.connect(audioContext.destination);
+
+        track.source.start(0, currentPlaybackTime);
+    } 
+
+    currentLevels[trackIndex] = nextLevel;
+
+    const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
+    if (levelButtonImage) {
+        levelButtonImage.src = `./images/lvl${nextLevel}.png`;
+    }
+}
+
 // Error handler to wrap async functions
 function handleErrors(fn) {
     return function(...params) {
         return fn(...params).catch(error => {
             console.error('An error occurred:', error);
         });
+    }
+}
+
+async function fileExists(url) {
+    try{
+        const response = await fetch(url, {method: 'HEAD'});
+        return response.ok;
+    } catch (error) {
+        return false;
     }
 }
 
