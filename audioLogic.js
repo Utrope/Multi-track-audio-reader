@@ -84,8 +84,8 @@ export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     const muteButton = document.getElementById(`muteButton-${trackIndex}`);
 
-    const muteEnabledImage = "images/mute/mute_neg.png";
-    const muteDisabledImage = "images/mute/mute.png";
+    const muteEnabledImage = "images/Mute/mute_neg.png";
+    const muteDisabledImage = "images/Mute/mute.png";
     
     track.isMuted = !track.isMuted;
     muteButton.src = track.isMuted ? muteEnabledImage : muteDisabledImage;
