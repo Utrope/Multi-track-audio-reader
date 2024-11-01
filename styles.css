@@ -161,3 +161,19 @@ body, html {
     display: block;
     margin: 5px auto;
 }
+
+.download-button {
+    margin-top: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #333;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.download-button:hover {
+    background-color: #555;
+}
