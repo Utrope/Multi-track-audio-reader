@@ -1,22 +1,24 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
   toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels } from './audioLogic.js';
 
-const trackSources = [
-    './tracks/bass_lvl1.mp3',
-    './tracks/drums_lvl1.mp3',
-    './tracks/guitar_lvl1.mp3',
-    './tracks/trombone_lvl1.mp3',
-    './tracks/trompette_lvl1.mp3',
-    './tracks/prod.mp3',
+  const trackSources = [
+    './tracks/lvl1/drums_lvl1.mp3',
+    './tracks/lvl1/bass_lvl1.mp3',
+    './tracks/lvl1/guitar_lvl1.mp3',
+    './tracks/lvl1/keyboard_lvl1.mp3',
+    './tracks/lvl1/altoSax_lvl1.mp3',
+    './tracks/lvl1/trombone_lvl1.mp3',
+    './tracks/Infini_prod.mp3',
 ];
 
 const trackNames = [
-    'bass.png',
     'drums.png',
+    'bass.png',
     'guitar.png',
-    'other.png',
-    'other.png',
-    'other.png'
+    'keyboard.png',
+    'altoSax.png',
+    'trombone.png',
+    'prod.png'
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -33,18 +35,16 @@ function createTrackControls(numTracks) {
         trackControl.className = 'track-control';
         trackControl.id = `track-${i}`;
 
-        const initialLevelImage = `images/lvl${initialLevels[i]}.png`;
+        const initialLevelImage = `images/Levels/lvl${initialLevels[i]}.png`;
 
         trackControl.innerHTML = `
         <div class="track-title">
-        <img src="images/${trackNames[i]}" alt="${trackNames[i].split('.')[0]}" class="track-title-image">
+        <img src="images/Instruments/${trackNames[i]}" alt="${trackNames[i].split('.')[0]}" class="track-title-image">
         </div>
         <div class="upper-part">
           <div class="left-buttons">
-            <img src="images/track_button_off.png" alt="Track" class="track-button mute-button" onclick="" id="trackButton" style="cursor: pointer;">
-            <img src="images/fx_button_off.png" alt="FX" class="track-button mute-button" onclick="" id="fxButton" style="cursor: pointer;">
-            <img src="images/solo_button_off.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
-            <img src="images/mute_button_off.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
+            <img src="images/Solo/Solo.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
+            <img src="images/Mute/mute.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
             <img src="${initialLevelImage}" alt="Level" class="track-button level-button" onclick="switchTrackLevel(${i})" id="levelButton-${i}" style="cursor: pointer;">
             </div>
           <div class="volume-control">
@@ -53,7 +53,7 @@ function createTrackControls(numTracks) {
         </div>
         <div class="lower-part">
         <div class="play-pause-button">
-          <img src="images/play_pause_button.png" alt="Play/Pause" onclick="handleLocalTrackPlayPause(${i})" id="playPauseButton-${i}" style="cursor: pointer;">
+          <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" onclick="handleLocalTrackPlayPause(${i})" id="playPauseButton-${i}" style="cursor: pointer;">
         </div>
       </div>
     `;
@@ -65,10 +65,12 @@ function createTrackControls(numTracks) {
         generalTrackControl.className = 'general-track-control';
 
         generalTrackControl.innerHTML = `
-      <div class="track-title">General</div>
+        <div class="track-title">
+                <img src="images/Instruments/general.png" class="track-title-image">
+        </div>
       <div class="upper-part">
       <div class="left-buttons">
-        <img src="images/stop_button.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
+        <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
       </div>
       <div class="volume-control">
         <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
@@ -76,7 +78,7 @@ function createTrackControls(numTracks) {
     </div>
     <div class="lower-part">
       <div class="play-pause-button">
-        <img src="images/play_pause_button.png" alt="Play/Pause" onclick="handlePlayPause()" id="playPauseButton" style="cursor: pointer;">
+        <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" onclick="handlePlayPause()" id="playPauseButton" style="cursor: pointer;">
       </div>
     </div>
     `;
