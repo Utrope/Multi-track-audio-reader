@@ -17,7 +17,7 @@ const trackNames = [
     'guitar.png',
     'keyboard.png',
     'altoSax.png',
-    'trombone.png',
+    'trombone_.png',
     'prod.png'
 ];
 
