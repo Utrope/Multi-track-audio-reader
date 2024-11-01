@@ -4,12 +4,13 @@ let startTime = 0;
 let tracks = [];
 
 const trackSources = [
-    './tracks/bass_lvl1.mp3',
-    './tracks/drums_lvl1.mp3',
-    './tracks/guitar_lvl1.mp3',
-    './tracks/trombone_lvl1.mp3',
-    './tracks/trompette_lvl1.mp3',
-    './tracks/prod.mp3',
+    './tracks/lvl1/drums_lvl1.mp3',
+    './tracks/lvl1/bass_lvl1.mp3',
+    './tracks/lvl1/guitar_lvl1.mp3',
+    './tracks/lvl1/keyboard_lvl1.mp3',
+    './tracks/lvl1/altoSax_lvl1.mp3',
+    './tracks/lvl1/trombone_lvl1.mp3',
+    './tracks/Infini_prod.mp3',
 ];
 let isPlaying = false;
 
@@ -22,7 +23,8 @@ let originalMuteStates = [];
 
 const maxLevels = [
     3,
-    4,
+    3,
+    3,
     3,
     3,
     3,
@@ -30,6 +32,7 @@ const maxLevels = [
 ];
 
 export const initialLevels = [
+    1,
     1,
     1,
     1,
@@ -72,8 +75,8 @@ export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     const muteButton = document.getElementById(`muteButton-${trackIndex}`);
 
-    const muteEnabledImage = "images/mute_button.png";
-    const muteDisabledImage = "images/mute_button_off.png";
+    const muteEnabledImage = "images/mute/mute_neg.png";
+    const muteDisabledImage = "images/mute/mute.png";
     
     track.isMuted = !track.isMuted;
     muteButton.src = track.isMuted ? muteEnabledImage : muteDisabledImage;
@@ -224,8 +227,8 @@ export function toggleSolo(trackIndex) {
 
     track.isSolo = !track.isSolo;
 
-    const soloEnabledImage = "images/solo_button.png";
-    const soloDisabledImage = "images/solo_button_off.png";
+    const soloEnabledImage = "images/Solo/Solo_neg.png";
+    const soloDisabledImage = "images/Solo/Solo.png";
     soloButton.src = track.isSolo ? soloEnabledImage : soloDisabledImage;  
     applyStrongMute();
 }
@@ -271,7 +274,7 @@ export function toggleLocalTrackPlayPause(trackIndex)
 export async function switchTrackLevel(trackIndex) {    
     const originalTrackPath = trackSources[trackIndex];
 
-    if (!originalTrackPath.includes('_lvl')) {
+    if (!originalTrackPath.includes('lvl')) {
         return;
     }
 
@@ -280,7 +283,7 @@ export async function switchTrackLevel(trackIndex) {
         nextLevel = 1;
     }
 
-    const levelTrackPath = originalTrackPath.replace(`_lvl1`, `_lvl${nextLevel}`);
+    const levelTrackPath = originalTrackPath.replace(/lvl1/g, `lvl${nextLevel}`);
     const exists = await fileExists(levelTrackPath);
 
     if (!exists)
@@ -309,7 +312,7 @@ export async function switchTrackLevel(trackIndex) {
 
     const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
     if (levelButtonImage) {
-        levelButtonImage.src = `./images/lvl${nextLevel}.png`;
+        levelButtonImage.src = `./images/Levels/lvl${nextLevel}.png`;
     }
 }
 
