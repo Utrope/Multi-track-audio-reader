@@ -1,5 +1,5 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
-  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels } from './audioLogic.js';
+  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF } from './audioLogic.js';
 
   const trackSources = [
     './tracks/lvl1/drums_lvl1.mp3',
@@ -17,7 +17,7 @@ const trackNames = [
     'guitar.png',
     'keyboard.png',
     'altoSax.png',
-    'trombone_.png',
+    'trombone.png',
     'prod.png'
 ];
 
@@ -36,16 +36,18 @@ function createTrackControls(numTracks) {
         trackControl.id = `track-${i}`;
 
         const initialLevelImage = `images/Levels/lvl${initialLevels[i]}.png`;
+        const instrumentName = trackNames[i].split('.')[0];
 
         trackControl.innerHTML = `
         <div class="track-title">
-        <img src="images/Instruments/${trackNames[i]}" alt="${trackNames[i].split('.')[0]}" class="track-title-image">
+        <img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title-image">
         </div>
         <div class="upper-part">
           <div class="left-buttons">
             <img src="images/Solo/Solo.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
             <img src="images/Mute/mute.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
             <img src="${initialLevelImage}" alt="Level" class="track-button level-button" onclick="switchTrackLevel(${i})" id="levelButton-${i}" style="cursor: pointer;">
+            <img src="images/Download/Download.png" alt="Download" class="track-button level-button" onclick="downloadPDF('${i}', ${initialLevels[i]})" id="downloadButton-${i}">
             </div>
           <div class="volume-control">
             <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" onchange="setVolume(${i}, this.value)">
@@ -116,4 +118,8 @@ window.handleLocalTrackPlayPause = (trackIndex) => {
 
 window.switchTrackLevel = (trackIndex) => {
   switchTrackLevel(trackIndex);
+}
+
+window.downloadPDF = (instrumentName, initialLevels) => {
+  downloadPDF(instrumentName, initialLevels);
 }

@@ -12,13 +12,25 @@ const trackSources = [
     './tracks/lvl1/trombone_lvl1.mp3',
     './tracks/Infini_prod.mp3',
 ];
+
+const trackNames = [
+    'drums.png',
+    'bass.png',
+    'guitar.png',
+    'keyboard.png',
+    'altoSax.png',
+    'trombone.png',
+    'prod.png'
+];
+
+
 let isPlaying = false;
 
-const VOLUME_STEP = 0.1; // Step value for volume increase/decrease
-const MAX_VOLUME = 1.0; // Maximum volume level
-const MIN_VOLUME = 0.0; // Minimum volume level
+const VOLUME_STEP = 0.1;
+const MAX_VOLUME = 1.0;
+const MIN_VOLUME = 0.0;
 
-let isTracksLoaded = false; // Flag to check if tracks are loaded
+let isTracksLoaded = false;
 let originalMuteStates = [];
 
 const maxLevels = [
@@ -49,7 +61,6 @@ export async function initAudioContext() {
     }
 }
 
-// Load a single track and return the decoded audio buffer
 async function loadTrack(trackPath) {
     try {
     const response = await fetch(trackPath);
@@ -61,7 +72,6 @@ async function loadTrack(trackPath) {
     }
 }
 
-// Preload and decode all tracks on page load
 export async function preloadAllTracks(trackSources) {
     await initAudioContext();
     const bufferPromises = trackSources.map(loadTrack);
@@ -70,7 +80,6 @@ export async function preloadAllTracks(trackSources) {
     isTracksLoaded = true;
 }
 
-// Toggle mute/unmute for a specific track
 export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
     const muteButton = document.getElementById(`muteButton-${trackIndex}`);
@@ -91,8 +100,6 @@ export function toggleMute(trackIndex) {
     track.gainNode.gain.value = track.isMuted ? 0 : track.previousVolume; 
 }
 
-
-// Set the volume for a specific track
 export function setVolume(trackIndex, volume) {
     const track = tracks[trackIndex];
     track.previousVolume = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
@@ -109,8 +116,6 @@ export function setAllVolumes(volume) {
 }
 )};
 
-
-// Toggle play/pause for all tracks
 export async function togglePlayPause() {
     if (!audioContext || audioContext.state == 'closed') {
         await loadAllTracks(trackSources); 
@@ -124,7 +129,6 @@ export async function togglePlayPause() {
     }
 }
 
-// Load and decode all tracks
 async function loadAllTracks(trackSources) {
     await initAudioContext();
     const bufferPromises = trackSources.map(trackPath => loadTrack(trackPath));
@@ -132,21 +136,18 @@ async function loadAllTracks(trackSources) {
     tracks = buffers.map(buffer => createTrack(buffer));
 }
 
-// Resume the audio context if it is suspended
 async function resumeAudioContext() {
     if (audioContext.state == 'suspended') {
         await audioContext.resume();
     }
 }
 
-// Create a track object with buffer and gain node
 function createTrack(buffer) {
     const gainNode = audioContext.createGain();
     gainNode.gain.value = 1.0; // Set initial volume to max
     return { buffer, gainNode, isMuted: false, source: null, previousVolume: 1.0};
 }
 
-// Create a source node from the buffer and handle the track end
 function createSource(buffer) {
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
@@ -154,7 +155,6 @@ function createSource(buffer) {
     return source;
 }
 
-// Start all tracks from the current time
 function startAllTracks() {
     tracks.forEach(track => {
         if (!track.source) {
@@ -168,19 +168,16 @@ function startAllTracks() {
     isPlaying = true;
 }
 
-// Pause all tracks and store the current playback time
 async function pauseAllTracks() {
     currentTrackTime = audioContext.currentTime - startTime;
     await audioContext.suspend();
     isPlaying = false;
 }
 
-// Handle track end event
 function handleTrackEnd() {
 	stopTracks();
 }
 
-// Initialize and start playing tracks
 async function initializeAndPlayTracks() {
     if (!isTracksLoaded) {
         await preloadAllTracks(trackSources);
@@ -188,7 +185,6 @@ async function initializeAndPlayTracks() {
     await togglePlayPause();
 }
 
-// Stop all tracks and reset the audio context
 export async function stopTracks() {
     if (audioContext) {
         tracks.forEach((track, index) => {
@@ -206,21 +202,18 @@ export async function stopTracks() {
     }
 }
 
-// Increase the volume for all tracks
 export function increaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value + VOLUME_STEP);
     });
 }
 
-// Decrease the volume for all tracks
 export function decreaseAllVolumes() {
     tracks.forEach((track, index) => {
         setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
     });
 }
 
-// Toggle solo for a specific track
 export function toggleSolo(trackIndex) {
     const track = tracks[trackIndex];
     const soloButton = document.getElementById(`soloButton-${trackIndex}`);
@@ -271,7 +264,7 @@ export function toggleLocalTrackPlayPause(trackIndex)
         toggleSolo(trackIndex);
 }
 
-export async function switchTrackLevel(trackIndex) {    
+export async function switchTrackLevel(trackIndex, instrumentName) {    
     const originalTrackPath = trackSources[trackIndex];
 
     if (!originalTrackPath.includes('lvl')) {
@@ -311,12 +304,39 @@ export async function switchTrackLevel(trackIndex) {
     currentLevels[trackIndex] = nextLevel;
 
     const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
+    const downloadButton = document.getElementById(`downloadButton-${trackIndex}`);
     if (levelButtonImage) {
         levelButtonImage.src = `./images/Levels/lvl${nextLevel}.png`;
     }
+
+    if (downloadButton)
+        downloadButton.onclick = () => downloadPDF(trackIndex, nextLevel);
 }
 
-// Error handler to wrap async functions
+export async function downloadPDF(i, level) {
+    const instrumentName = trackNames[i].split('.')[0];
+    const pdfPath = `scores/${instrumentName}/lvl${level}.pdf`;
+    try {
+        const response = await fetch(pdfPath);
+        if (!response.ok) {
+            throw new Error (`PDF not found for ${instrumentName} at level ${level}`);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${instrumentName}_lvl${level}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error(`Error downloading PDF: ${error.message}`);
+    }
+}
+
 function handleErrors(fn) {
     return function(...params) {
         return fn(...params).catch(error => {
