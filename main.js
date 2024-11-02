@@ -74,7 +74,7 @@ function createTrackControls(numTracks) {
       <div class="stop-button">
         <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
       </div>
-      <div class="general-volume-control">
+      <div class="volume-control">
         <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
       </div>
     </div>

@@ -99,27 +99,15 @@ body, html {
     height: auto;
 }
 
-.general-volume-control {
-    display: block;
-    align-items: right;
-    justify-content: right;
-    margin-left: 20%;
-    width: 15%;
-    height: auto;
-}
-
-.general-volume-control input[type="range"] {
-    writing-mode: bt-lr;
-    -webkit-appearance: slider-vertical;
-    height: 24vh;
-    width: 2vw;
-}
 
 .volume-control input[type="range"] {
-    writing-mode: bt-lr;
+    writing-mode: vertical-lr;
     -webkit-appearance: slider-vertical;
+    -moz-appearance: slider-vertical;
+    appearance: slider-vertical;
     height: 24vh;
     width: 2vw;
+    transform: rotate(180deg);
 }
 
 .mute-button {
