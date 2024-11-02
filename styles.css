@@ -6,82 +6,73 @@ body, html {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    max-width: 100vw;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-#controls {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.control-button {
-    background-color: black;
-    color: white;
-    border: 1px solid white;
-    border-radius: 10px;
-    padding: 5px 10px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.control-button:hover {
-    background-color: white;
-    color: back;
-}
 #track-controls-container {
-    margin-top: 20px;
+    margin-top: 2%;
+    margin-left: 1%;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    width: 100vw;
+    height: 65vh;
 }
 
 .track-control {
     background-color: #1e1e1e;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 1.7%;
+    border-radius: 0.85%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 5px;
+    margin: 0.425%;
+    width: 8%;
+    height: auto;
 }
 
 .general-track-control {
     background-color: #1e1e1e;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 1.7%;
+    border-radius: 0.85%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-left: 25px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin: 0.425%;
+    width: 8%;
+    height: auto;
+    margin-left: 2%;
+}
+
+.track-title {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 1.7% auto 2.125% auto;
 }
 
 .track-title-image {
-    width: 50px;
-    height: auto;
     display: block;
-    margin: 20px auto 25px auto;
+    width: 42%;
+    height: auto;
 }
 
 .upper-part {
     display: flex;
-    justify-content: space-evenly;
     align-items: center;
     width: 100%;
-    margin-bottom: 20px;
+    height: 46%;
+    margin-bottom: 1.7%;
 }
 
+
 .left-buttons {
-    display: flex;
-    flex-direction: column;
+    display: block;
     align-items: center;
-    gap: 5px;
-    width: 50%;
+    width: 100%;
+    height: auto;
 }
 
 .left-buttons img 
@@ -91,89 +82,90 @@ body, html {
 }
 
 .lower-part {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
+    display: block;
+    align-items: center;
+    gap: 0.425%;
+    width: 100%;
+    height: auto;
 }
 
 
 .volume-control {
-    display: flex;
+    display: block;
     align-items: right;
     justify-content: right;
-    margin-left: 50%;
-    height: 200px;
+    margin-left: 30%;
+    width: 15%;
+    height: auto;
+}
+
+.general-volume-control {
+    display: block;
+    align-items: right;
+    justify-content: right;
+    margin-left: 20%;
+    width: 15%;
+    height: auto;
+}
+
+.general-volume-control input[type="range"] {
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    height: 24vh;
+    width: 2vw;
 }
 
 .volume-control input[type="range"] {
     writing-mode: bt-lr;
     -webkit-appearance: slider-vertical;
-    width: 8px;
-    height: 100%;
+    height: 24vh;
+    width: 2vw;
 }
 
 .mute-button {
-    width: 80px;
+    width: 100%;
+    height: auto;
     cursor: pointer;
     display: block;
 }
 
-.play-pause-button img {
-    width: 120px;
-    cursor: pointer;
-    display: block;
+.play-pause-button img{
+    width: 100%;
+    height: auto;
 }
 
-.stop-button img {
-    width: 20px;
-    cursor: pointer;
+.stop-button {
     display: block;
-    margin-bottom: 0;
+    align-items: center;
+    gap: 0.425%;
+    width: 100%;
+    height: auto;
 }
 
 .track-buttons {
-    display: flex;
+    display: block;
     flex-direction: column;
-    margin-bottom: 5px;
+    margin-bottom: 0.425%;
 }
 
 .track-button {
-    margin: 5px;
-    padding: 10px 20px;
+    margin: 0.425%;
+    padding: 0.85% 1.7%;
     border: none;
-    border-radius: 5px;
+    border-radius: 0.425%;
     cursor: pointer;
     color: #ffffff;
-}
-
-.stop-button img {
-    margin-bottom: 0;
 }
 
 .track-button img.mute-button {
-    margin: 5px auto;
-    width: 50%;
+    margin: 0.425% auto;
+    width: 10%;
 }
 
 .level-button {
-    width: 50px;
+    width:70%;
+    height: auto;
     cursor: pointer;
     display: block;
-    margin: 5px auto;
-}
-
-.download-button {
-    margin-top: 5px;
-    padding: 8px 12px;
-    font-size: 14px;
-    color: #ffffff;
-    background-color: #333;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.download-button:hover {
-    background-color: #555;
+    margin: 0.425% auto;
 }
