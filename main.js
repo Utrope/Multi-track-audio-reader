@@ -40,7 +40,7 @@ function createTrackControls(numTracks) {
 
         trackControl.innerHTML = `
         <div class="track-title">
-        <img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title-image">
+        <img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title track-title-image">
         </div>
         <div class="upper-part">
           <div class="left-buttons">
@@ -71,10 +71,10 @@ function createTrackControls(numTracks) {
                 <img src="images/Instruments/general.png" class="track-title-image">
         </div>
       <div class="upper-part">
-      <div class="left-buttons">
+      <div class="stop-button">
         <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
       </div>
-      <div class="volume-control">
+      <div class="general-volume-control">
         <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
       </div>
     </div>
