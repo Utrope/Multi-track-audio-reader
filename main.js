@@ -1,5 +1,5 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
-  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF } from './audioLogic.js';
+  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF, switchInstrument } from './audioLogic.js';
 
   const trackSources = [
     './tracks/lvl1/drums_lvl1.mp3',
@@ -38,9 +38,25 @@ function createTrackControls(numTracks) {
         const initialLevelImage = `images/Levels/lvl${initialLevels[i]}.png`;
         const instrumentName = trackNames[i].split('.')[0];
 
+        let instrumentSwitcher = '';
+        if (i === 4 || i === 5) {
+          const instrument1 = i === 4 ? 'altoSax' : 'trombone';
+          const instrument2 = i === 4 ? 'flute' : 'tenor';
+          instrumentSwitcher = `
+              <div class="instrument-switcher">
+                  <img src="images/Instruments/${instrument1}.png" alt="${instrument1}"
+                      id="instrument-${instrument1}-${i}" style="opacity: 1; cursor: pointer;"
+                      onclick="switchInstrumentUI(${i}, '${instrument1}', '${instrument2}')">
+                  <img src="images/Instruments/${instrument2}.png" alt="${instrument2}"
+                      id="instrument-${instrument2}-${i}" style="opacity: 0.5; cursor: pointer;"
+                      onclick="switchInstrumentUI(${i}, '${instrument2}', '${instrument1}')">
+              </div>
+          `;
+      }
+
         trackControl.innerHTML = `
         <div class="track-title">
-        <img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title track-title-image">
+                ${instrumentSwitcher || `<img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title track-title-image">`}
         </div>
         <div class="upper-part">
           <div class="left-buttons">
@@ -123,3 +139,10 @@ window.switchTrackLevel = (trackIndex) => {
 window.downloadPDF = (instrumentName, initialLevels) => {
   downloadPDF(instrumentName, initialLevels);
 }
+
+window.switchInstrumentUI = async (trackIndex, newInstrument, oldInstrument) => {
+  await switchInstrument(trackIndex, newInstrument);
+  
+  document.getElementById(`instrument-${newInstrument}-${trackIndex}`).style.opacity = '1';
+  document.getElementById(`instrument-${oldInstrument}-${trackIndex}`).style.opacity = '0.5';
+};

@@ -157,3 +157,13 @@ body, html {
     display: block;
     margin: 0.425% auto;
 }
+
+.instrument-switcher {
+    display: flex;
+    gap: 0.425%;
+    justify-content: center;
+    margin-bottom: 0.85%;
+}
+.instrument-switcher img {
+    width: 48%;
+}

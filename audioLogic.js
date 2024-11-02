@@ -23,6 +23,17 @@ const trackNames = [
     'prod.png'
 ];
 
+let activeInstruments = {
+    4: 'altoSax',
+    5: 'trombone'
+};
+
+const instrumentSources = {
+    altoSax: './tracks/lvl1/altoSax_lvl1.mp3',
+    flute: './tracks/lvl1/flute_lvl1.mp3',
+    trombone: './tracks/lvl1/trombone_lvl1.mp3',
+    tenor: './tracks/lvl1/tenor_lvl1.mp3'
+};
 
 let isPlaying = false;
 
@@ -266,6 +277,7 @@ export function toggleLocalTrackPlayPause(trackIndex)
 
 export async function switchTrackLevel(trackIndex, instrumentName) {    
     const originalTrackPath = trackSources[trackIndex];
+    console.log(`changing levels from ${trackSources[trackIndex]}`);
 
     if (!originalTrackPath.includes('lvl')) {
         return;
@@ -335,6 +347,37 @@ export async function downloadPDF(i, level) {
     } catch (error) {
         console.error(`Error downloading PDF: ${error.message}`);
     }
+}
+
+export async function switchInstrument(trackIndex, newInstrument) {
+    const currentLevel = currentLevels[trackIndex];
+    const newTrackPath = `./tracks/lvl${currentLevel}/${newInstrument}_lvl${currentLevel}.mp3`;
+
+    const exists = await fileExists(newTrackPath);
+    if (!exists) return;
+
+    const newBuffer = await loadTrack(newTrackPath);
+    const track = tracks[trackIndex];
+
+    const currentPlaybackTime = audioContext.currentTime - startTime;
+
+    if (track.source) {
+        track.source.disconnect();
+    }
+
+    track.buffer = newBuffer;
+    track.source = createSource(newBuffer);
+    track.source.connect(track.gainNode);
+    track.gainNode.connect(audioContext.destination);
+
+    track.source.start(0, currentPlaybackTime);
+
+    activeInstruments[trackIndex] = newInstrument;
+    trackNames[trackIndex] = `${newInstrument}.png`;
+    const referenceTrackPath = `./tracks/lvl${currentLevel}/${newInstrument}_lvl1.mp3`;
+
+    trackSources[trackIndex] = referenceTrackPath;
+    console.log(`changing instruments to ${newTrackPath}`);
 }
 
 function handleErrors(fn) {
