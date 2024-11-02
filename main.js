@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initAudioContext();
     await preloadAllTracks(trackSources);
     createTrackControls(trackSources.length);
+    document.getElementById('loading-screen').style.display = 'none';
 });
 
 function createTrackControls(numTracks) {

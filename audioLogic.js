@@ -85,7 +85,22 @@ async function loadTrack(trackPath) {
 
 export async function preloadAllTracks(trackSources) {
     await initAudioContext();
-    const bufferPromises = trackSources.map(loadTrack);
+
+    const totalTracks = trackSources.length+1;
+    let loadedTracks = 1;
+
+    const updateProgress = () => {
+        loadedTracks++;
+        const progress = (loadedTracks / totalTracks) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+    }
+
+    const bufferPromises = trackSources.map(async (trackPath) => {
+        const buffer = await loadTrack(trackPath);
+        updateProgress();
+        return buffer;
+    });
+    
     const buffers = await Promise.all(bufferPromises);
     tracks = buffers.map(buffer => createTrack(buffer));
     isTracksLoaded = true;
