@@ -41,7 +41,7 @@ function createTrackControls(numTracks) {
         let instrumentSwitcher = '';
         if (i === 4 || i === 5) {
           const instrument1 = i === 4 ? 'altoSax' : 'trombone';
-          const instrument2 = i === 4 ? 'flute' : 'tenor';
+          const instrument2 = i === 4 ? 'flute' : 'tenorSax';
           instrumentSwitcher = `
               <div class="instrument-switcher">
                   <img src="images/Instruments/${instrument1}.png" alt="${instrument1}"
