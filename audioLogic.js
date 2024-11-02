@@ -359,18 +359,18 @@ export async function switchInstrument(trackIndex, newInstrument) {
     const newBuffer = await loadTrack(newTrackPath);
     const track = tracks[trackIndex];
 
-    const currentPlaybackTime = audioContext.currentTime - startTime;
 
     if (track.source) {
+        const currentPlaybackTime = audioContext.currentTime - startTime;
         track.source.disconnect();
+
+        track.buffer = newBuffer;
+        track.source = createSource(newBuffer);
+        track.source.connect(track.gainNode);
+        track.gainNode.connect(audioContext.destination);
+
+        track.source.start(0, currentPlaybackTime);
     }
-
-    track.buffer = newBuffer;
-    track.source = createSource(newBuffer);
-    track.source.connect(track.gainNode);
-    track.gainNode.connect(audioContext.destination);
-
-    track.source.start(0, currentPlaybackTime);
 
     activeInstruments[trackIndex] = newInstrument;
     trackNames[trackIndex] = `${newInstrument}.png`;
