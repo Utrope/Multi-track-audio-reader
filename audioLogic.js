@@ -389,7 +389,7 @@ export async function switchInstrument(trackIndex, newInstrument) {
 
     activeInstruments[trackIndex] = newInstrument;
     trackNames[trackIndex] = `${newInstrument}.png`;
-    const referenceTrackPath = `./tracks/lvl${currentLevel}/${newInstrument}_lvl1.mp3`;
+    const referenceTrackPath = `./tracks/lvl1/${newInstrument}_lvl1.mp3`;
 
     trackSources[trackIndex] = referenceTrackPath;
     console.log(`changing instruments to ${newTrackPath}`);
