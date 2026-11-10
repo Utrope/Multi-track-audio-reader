@@ -137,15 +137,15 @@ function applyAllGains() {
     updatePlayPauseButtons();
 }
 
+// L'icône reste la même (la version contour est quasi invisible sur le fond sombre) :
+// l'état « en lecture » passe par aria-pressed, que le CSS signale par un halo.
 function updatePlayPauseButtons() {
-    const playingImage = "images/PlayPause/Play pause.png";
-    const idleImage = "images/PlayPause/Play_pause_neg.png";
+    const image = "images/PlayPause/Play_pause_neg.png";
 
-    setButtonState('playPauseButton', isPlaying ? playingImage : idleImage, isPlaying);
+    setButtonState('playPauseButton', image, isPlaying);
 
     tracks.forEach((track, index) => {
-        const trackPlaying = isPlaying && track.isSolo;
-        setButtonState(`playPauseButton-${index}`, trackPlaying ? playingImage : idleImage, trackPlaying);
+        setButtonState(`playPauseButton-${index}`, image, isPlaying && track.isSolo);
     });
 }
 
