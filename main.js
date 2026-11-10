@@ -1,5 +1,5 @@
 import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
-  toggleMute, setVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF, switchInstrument } from './audioLogic.js';
+  toggleMute, setVolume, setMasterVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF, switchInstrument } from './audioLogic.js';
 
   const trackSources = [
     './tracks/lvl1/drums_lvl1.mp3',
@@ -67,7 +67,7 @@ function createTrackControls(numTracks) {
             <img src="images/Download/Download.png" alt="Download" class="track-button level-button" onclick="downloadPDF('${i}', ${initialLevels[i]})" id="downloadButton-${i}">
             </div>
           <div class="volume-control">
-            <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" onchange="setVolume(${i}, this.value)">
+            <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" oninput="setVolume(${i}, this.value)">
           </div>
         </div>
         <div class="lower-part">
@@ -92,7 +92,7 @@ function createTrackControls(numTracks) {
         <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
       </div>
       <div class="volume-control">
-        <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" onchange="setAllVolumes(this.value)">
+        <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" oninput="setMasterVolume(this.value)">
       </div>
     </div>
     <div class="lower-part">
@@ -118,12 +118,7 @@ function createTrackControls(numTracks) {
   window.setVolume = (trackIndex, volume) => {
     setVolume(trackIndex, volume);
   };
-  window.setAllVolumes = (volume) => {
-    for (let i = 0; i < trackSources.length; i++) {
-        setVolume(i, volume);
-        document.getElementById(`volume-slider-${i}`).value = volume;  // Sync individual sliders
-    }
-};
+  window.setMasterVolume = setMasterVolume;
 
 window.toggleSolo = (trackIndex) => {
   toggleSolo(trackIndex);
