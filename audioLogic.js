@@ -109,19 +109,27 @@ function applyGain(trackIndex) {
     const track = tracks[trackIndex];
     track.gainNode.gain.value = isAudible(track) ? track.volume : 0;
 
-    const muteButton = document.getElementById(`muteButton-${trackIndex}`);
-    if (muteButton)
-        muteButton.src = track.isMuted ? "images/Mute/mute_neg.png" : "images/Mute/mute.png";
-
-    const soloButton = document.getElementById(`soloButton-${trackIndex}`);
-    if (soloButton)
-        soloButton.src = track.isSolo ? "images/Solo/Solo_neg.png" : "images/Solo/Solo.png";
+    setButtonState(`muteButton-${trackIndex}`,
+        track.isMuted ? "images/Mute/mute_neg.png" : "images/Mute/mute.png", track.isMuted);
+    setButtonState(`soloButton-${trackIndex}`,
+        track.isSolo ? "images/Solo/Solo_neg.png" : "images/Solo/Solo.png", track.isSolo);
 
     const slider = document.getElementById(`volume-slider-${trackIndex}`);
     if (slider) {
         slider.value = Math.round(track.volume * 100);
         slider.classList.toggle('silenced', !isAudible(track));
     }
+}
+
+// Met à jour l'image d'un bouton et, pour un bouton à bascule, son état aria-pressed.
+function setButtonState(buttonId, imageSrc, pressed) {
+    const button = document.getElementById(buttonId);
+    if (!button)
+        return;
+
+    button.querySelector('img').src = imageSrc;
+    if (pressed !== undefined)
+        button.setAttribute('aria-pressed', String(pressed));
 }
 
 function applyAllGains() {
@@ -133,14 +141,11 @@ function updatePlayPauseButtons() {
     const playingImage = "images/PlayPause/Play pause.png";
     const idleImage = "images/PlayPause/Play_pause_neg.png";
 
-    const generalButton = document.getElementById('playPauseButton');
-    if (generalButton)
-        generalButton.src = isPlaying ? playingImage : idleImage;
+    setButtonState('playPauseButton', isPlaying ? playingImage : idleImage, isPlaying);
 
     tracks.forEach((track, index) => {
-        const button = document.getElementById(`playPauseButton-${index}`);
-        if (button)
-            button.src = isPlaying && track.isSolo ? playingImage : idleImage;
+        const trackPlaying = isPlaying && track.isSolo;
+        setButtonState(`playPauseButton-${index}`, trackPlaying ? playingImage : idleImage, trackPlaying);
     });
 }
 
@@ -322,12 +327,15 @@ async function loadTrackVariant(trackIndex) {
         return false;
     }
 
-    const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
-    if (levelButtonImage)
-        levelButtonImage.src = levelImage(level);
+    setButtonState(`levelButton-${trackIndex}`, levelImage(level));
+    const levelButton = document.getElementById(`levelButton-${trackIndex}`);
+    if (levelButton)
+        levelButton.setAttribute('aria-label', `Niveau ${level} sur ${TRACKS[trackIndex].levels}, changer de niveau`);
 
-    document.querySelectorAll(`#track-${trackIndex} [data-instrument]`).forEach(image => {
-        image.classList.toggle('active', image.dataset.instrument === instrument);
+    document.querySelectorAll(`#track-${trackIndex} [data-instrument]`).forEach(button => {
+        const isActive = button.dataset.instrument === instrument;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
     });
 
     return true;
