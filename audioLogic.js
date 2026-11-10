@@ -36,7 +36,8 @@ let isPlaying = false;
 const MAX_VOLUME = 1.0;
 const MIN_VOLUME = 0.0;
 
-let isTracksLoaded = false;
+// Marge (s) pour programmer un démarrage synchronisé de plusieurs sources.
+const START_DELAY = 0.05;
 
 const maxLevels = [
     3,
@@ -87,6 +88,34 @@ async function loadTrack(trackPath) {
     }
 }
 
+// Cache LRU des pistes décodées (chemin -> Promise<AudioBuffer>). Stocker la promesse
+// permet aussi de partager un chargement déjà en cours. Une piste décodée pèse ~90 Mo :
+// on garde les pistes en cours d'utilisation plus quelques variantes récentes seulement.
+const EXTRA_CACHED_BUFFERS = 2;
+const MAX_CACHED_BUFFERS = trackSources.length + EXTRA_CACHED_BUFFERS;
+const bufferCache = new Map();
+
+function getBuffer(trackPath) {
+    let promise = bufferCache.get(trackPath);
+    if (promise) {
+        bufferCache.delete(trackPath); // réinséré en fin de Map = le plus récent
+    } else {
+        promise = loadTrack(trackPath).catch(error => {
+            // Un échec n'est pas mis en cache : le prochain essai refera la requête.
+            if (bufferCache.get(trackPath) === promise)
+                bufferCache.delete(trackPath);
+            throw error;
+        });
+    }
+    bufferCache.set(trackPath, promise);
+
+    while (bufferCache.size > MAX_CACHED_BUFFERS)
+        bufferCache.delete(bufferCache.keys().next().value);
+
+    return promise;
+}
+
+// Rejette si une piste ne peut pas être chargée : à l'appelant d'afficher l'erreur.
 export async function preloadAllTracks(trackSources) {
     await initAudioContext();
 
@@ -98,16 +127,16 @@ export async function preloadAllTracks(trackSources) {
         const progress = (loadedTracks / totalTracks) * 100;
         document.getElementById('progress-bar').style.width = `${progress}%`;
     }
+    document.getElementById('progress-bar').style.width = `${(loadedTracks / totalTracks) * 100}%`;
 
     const bufferPromises = trackSources.map(async (trackPath) => {
-        const buffer = await loadTrack(trackPath);
+        const buffer = await getBuffer(trackPath);
         updateProgress();
         return buffer;
     });
-    
+
     const buffers = await Promise.all(bufferPromises);
     tracks = buffers.map(buffer => createTrack(buffer));
-    isTracksLoaded = true;
 }
 
 // Seul endroit qui décide du gain réel d'une piste, à partir de son volume, de son mute
@@ -178,23 +207,12 @@ export function setMasterVolume(volume) {
 }
 
 export async function togglePlayPause() {
-    if (!audioContext || audioContext.state == 'closed') {
-        await loadAllTracks(trackSources); 
-    }
-    
     if (!isPlaying) {
         await resumeAudioContext();
         startAllTracks();
     } else {
         pauseAllTracks();
     }
-}
-
-async function loadAllTracks(trackSources) {
-    await initAudioContext();
-    const bufferPromises = trackSources.map(trackPath => loadTrack(trackPath));
-    const buffers = await Promise.all(bufferPromises);
-    tracks = buffers.map(buffer => createTrack(buffer));
 }
 
 async function resumeAudioContext() {
@@ -207,7 +225,7 @@ function createTrack(buffer) {
     const gainNode = audioContext.createGain();
     gainNode.gain.value = 1.0;
     gainNode.connect(masterGain);
-    return { buffer, gainNode, source: null, volume: 1.0, isMuted: false, isSolo: false };
+    return { buffer, gainNode, source: null, retiringSource: null, volume: 1.0, isMuted: false, isSolo: false };
 }
 
 function createSource(buffer) {
@@ -218,14 +236,16 @@ function createSource(buffer) {
 }
 
 function startAllTracks() {
+    // Toutes les sources sont programmées sur le même instant pour rester synchronisées.
+    const when = audioContext.currentTime + START_DELAY;
     tracks.forEach(track => {
         if (!track.source) {
             track.source = createSource(track.buffer);
             track.source.connect(track.gainNode);
-            track.source.start(0, currentTrackTime);
+            track.source.start(when, currentTrackTime);
         }
     });
-    startTime = audioContext.currentTime - currentTrackTime;
+    startTime = when - currentTrackTime;
     isPlaying = true;
     updatePlayPauseButtons();
 }
@@ -241,13 +261,6 @@ function handleTrackEnd() {
 	stopTracks();
 }
 
-async function initializeAndPlayTracks() {
-    if (!isTracksLoaded) {
-        await preloadAllTracks(trackSources);
-    }
-    await togglePlayPause();
-}
-
 export async function stopTracks() {
     if (audioContext) {
         // Stop remet aussi à zéro les solos et les mutes (les volumes sont conservés).
@@ -255,6 +268,10 @@ export async function stopTracks() {
             if (track.source) {
                 disposeSource(track.source);
                 track.source = null;
+            }
+            if (track.retiringSource) {
+                disposeSource(track.retiringSource);
+                track.retiringSource = null;
             }
             track.isSolo = false;
             track.isMuted = false;
@@ -301,12 +318,23 @@ function replaceTrackBuffer(trackIndex, buffer) {
     if (!track.source)
         return;
 
-    const currentPlaybackTime = audioContext.currentTime - startTime;
-    disposeSource(track.source);
+    // Bascule au même instant exact : l'ancienne source s'arrête quand la nouvelle démarre,
+    // à la même position que les autres pistes.
+    const when = audioContext.currentTime + START_DELAY;
+    if (track.retiringSource)
+        disposeSource(track.retiringSource);
+    const oldSource = track.source;
+    oldSource.onended = null;
+    oldSource.stop(when);
+    // Gardée pour que Stop puisse la couper avant son arrêt programmé (ex. si en pause).
+    track.retiringSource = oldSource;
 
     track.source = createSource(buffer);
     track.source.connect(track.gainNode);
-    track.source.start(0, currentPlaybackTime);
+    if (when >= startTime)
+        track.source.start(when, when - startTime);
+    else
+        track.source.start(startTime, 0); // lecture programmée mais pas encore commencée
 }
 
 // Charge la variante (instrument + niveau) demandée en dernier pour une piste.
@@ -317,7 +345,7 @@ async function loadTrackVariant(trackIndex) {
     const instrument = pendingInstruments[trackIndex];
 
     try {
-        const buffer = await loadTrack(`./tracks/lvl${level}/${instrument}_lvl${level}.mp3`);
+        const buffer = await getBuffer(`./tracks/lvl${level}/${instrument}_lvl${level}.mp3`);
         if (token !== loadTokens[trackIndex])
             return false;
 
@@ -356,20 +384,18 @@ export async function downloadPDF(i, level) {
     const instrumentName = trackNames[i].split('.')[0];
     const pdfPath = `scores/${instrumentName}/lvl${level}.pdf`;
     try {
-        const response = await fetch(pdfPath);
+        // Simple vérification d'existence, pour ne pas télécharger une page 404.
+        const response = await fetch(pdfPath, { method: 'HEAD' });
         if (!response.ok) {
             throw new Error (`PDF not found for ${instrumentName} at level ${level}`);
         }
 
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
+        // Lien direct : le navigateur gère le téléchargement, sans blob à révoquer.
         const a = document.createElement('a');
-        a.href = url;
+        a.href = pdfPath;
         a.download = `${instrumentName}_lvl${level}.pdf`;
         document.body.appendChild(a);
         a.click();
-
-        URL.revokeObjectURL(url);
         document.body.removeChild(a);
     } catch (error) {
         console.error(`Error downloading PDF: ${error.message}`);
@@ -392,7 +418,5 @@ function handleErrors(fn) {
     }
 }
 
-initializeAndPlayTracks = handleErrors(initializeAndPlayTracks);
 togglePlayPause = handleErrors(togglePlayPause);
 stopTracks = handleErrors(stopTracks);
-preloadAllTracks = handleErrors(preloadAllTracks);
