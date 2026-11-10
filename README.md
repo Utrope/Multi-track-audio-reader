@@ -1,12 +1,46 @@
-# Outil audio multipistes
+# Infini – lecteur multipiste pour répéter en groupe
 
-Lecteur multipiste dans le navigateur pour travailler le morceau *Infini* : chaque instrument
-est une piste qu'on peut écouter seule, couper, régler en volume, passer d'un niveau de
-difficulté à l'autre, et dont on peut télécharger la partition. Une piste « prod » joue
-l'accompagnement complet.
+**Un mélangeur dans le navigateur pour travailler un morceau instrument par instrument.**
+Chaque musicien isole sa partie, choisit son niveau de difficulté, baisse ou coupe les
+autres pistes, et télécharge la partition qui correspond à ce qu'il entend.
 
-Site statique (HTML, CSS, JavaScript sans dépendance ni étape de build), publié avec
-GitHub Pages.
+**[▶ Essayer la démo](https://utrope.github.io/Multi-track-audio-reader/)** · aucune installation, fonctionne dans le navigateur
+
+![Interface du lecteur : sept pistes (batterie, basse, guitare, clavier, saxophone alto / flûte, trombone / saxophone ténor, production) et une colonne générale, avec pour chacune Solo, Mute, niveau, partition, volume et lecture](docs/screenshot.png)
+
+## Fonctionnalités
+
+- **7 pistes jouées ensemble**, parfaitement synchronisées : batterie, basse, guitare,
+  clavier, deux pupitres de vents et l'accompagnement complet.
+- **3 niveaux de difficulté par instrument**, changeables en pleine lecture, sans coupure
+  ni décalage.
+- **Choix de l'instrument** sur les pupitres de vents (saxophone alto ou flûte, trombone ou
+  saxophone ténor).
+- **Solo, Mute et volume** par piste, plus un volume général.
+- **Partition PDF** de l'instrument et du niveau en cours, en un clic.
+- **Utilisable au clavier**, avec des libellés pour les lecteurs d'écran ; s'adapte aux
+  petits écrans.
+
+## Points techniques
+
+- **Web Audio API, sans dépendance ni étape de build** : HTML, CSS et JavaScript (modules ES)
+  servis tels quels par GitHub Pages.
+- **Lecture synchronisée à l'échantillon près** : toutes les sources sont programmées sur
+  le même instant de l'horloge audio. Un changement de niveau arrête l'ancienne source et
+  démarre la nouvelle au même instant exact, à la même position.
+- **Changements concurrents sans incohérence** : chaque piste garde la dernière variante
+  demandée et un jeton de requête, si bien que les réponses arrivées en retard sont
+  ignorées et que des clics rapides donnent toujours le bon résultat.
+- **Cache LRU des pistes décodées**, qui partage aussi les chargements en cours : revenir à
+  un niveau déjà écouté est instantané, avec une mémoire bornée.
+- **Une seule règle de mixage** (`applyGain`) qui combine volume, mute et solo, appliquée par
+  un nœud de gain par piste et un nœud de gain général.
+- **Interface générée depuis une configuration** (`config.js`) : ajouter un instrument tient
+  en une ligne. Les événements passent par un seul écouteur qui lit `data-action`.
+- **Accessibilité** : vrais `<button>` avec libellés, `aria-pressed` sur les bascules, focus
+  visible au clavier, sliders nommés.
+- **Robustesse** : écran d'erreur avec bouton « Réessayer », qui ne recharge que les pistes
+  en échec.
 
 ## Lancer en local
 
