@@ -20,6 +20,28 @@ export const TRACKS = [
 
 export const INITIAL_LEVEL = 1;
 
+// Noms lisibles des instruments (libellés d'accessibilité : lecteurs d'écran, infobulles).
+export const INSTRUMENT_LABELS = {
+    drums: 'Batterie',
+    bass: 'Basse',
+    guitar: 'Guitare',
+    keyboard: 'Clavier',
+    altoSax: 'Saxophone alto',
+    flute: 'Flûte',
+    trombone: 'Trombone',
+    tenorSax: 'Saxophone ténor',
+    prod: 'Production',
+};
+
+export function instrumentLabel(instrument) {
+    return INSTRUMENT_LABELS[instrument] ?? instrument;
+}
+
+// Nom d'une piste : ses instruments possibles, ex. « Saxophone alto / Flûte ».
+export function trackLabel(trackIndex) {
+    return TRACKS[trackIndex].instruments.map(instrumentLabel).join(' / ');
+}
+
 export function hasLevels(trackIndex) {
     return Boolean(TRACKS[trackIndex].levels);
 }
