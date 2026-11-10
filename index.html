@@ -25,9 +25,33 @@
             <strong>Solo</strong> et <strong>Mute</strong> isolent ou coupent une piste,
             le <strong>chiffre</strong> change le niveau de difficulté
             et la <strong>flèche</strong> télécharge la partition.
+            La barre de temps permet de se déplacer, et <strong>A</strong> / <strong>B</strong>
+            de répéter un passage en boucle.
         </p>
         <p class="scroll-hint" aria-hidden="true">Faites glisser la table vers la gauche pour voir toutes les pistes →</p>
     </header>
+    <section id="transport" aria-label="Position et boucle" hidden>
+        <span id="time-current" class="time">0:00</span>
+        <div class="seek-wrap">
+            <input type="range" id="seek-slider" min="0" max="0" step="1" value="0"
+                aria-label="Position dans le morceau">
+            <div id="loop-region" class="loop-region" hidden></div>
+        </div>
+        <span id="time-total" class="time">0:00</span>
+        <div class="loop-controls" role="group" aria-label="Boucle A-B">
+            <button type="button" class="text-button" data-action="loop-start"
+                title="Placer le début de la boucle à la position actuelle"
+                aria-label="Placer le début de la boucle (A) à la position actuelle">A</button>
+            <button type="button" class="text-button" data-action="loop-end"
+                title="Placer la fin de la boucle à la position actuelle"
+                aria-label="Placer la fin de la boucle (B) à la position actuelle">B</button>
+            <button type="button" class="text-button" id="loop-toggle-button" data-action="loop-toggle"
+                aria-pressed="false" disabled>Boucle</button>
+            <button type="button" class="text-button" id="loop-clear-button" data-action="loop-clear"
+                title="Effacer la boucle" aria-label="Effacer la boucle" disabled>✕</button>
+            <span id="loop-info" class="loop-info" aria-live="polite"></span>
+        </div>
+    </section>
     <main id="track-controls-container">
     </main>
     <script src="audioLogic.js" type="module"></script>

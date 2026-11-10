@@ -44,6 +44,108 @@ body {
     color: #ffffff;
 }
 
+/* --- Timeline et boucle A-B ------------------------------------------------------------ */
+
+#transport {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 0.75rem;
+    width: min(100%, 72rem);
+    padding: 1.25rem 1rem 0;
+}
+
+#transport[hidden] {
+    display: none;
+}
+
+.time {
+    min-width: 2.75rem;
+    font-variant-numeric: tabular-nums;
+    color: #b0b0b0;
+    text-align: center;
+}
+
+.seek-wrap {
+    position: relative;
+    /* Base modeste pour que « 0:00 — barre — 3:54 » tienne sur une ligne de téléphone ;
+       la barre s'étire ensuite pour remplir la place disponible. */
+    flex: 1 1 10rem;
+    min-width: 8rem;
+    padding-bottom: 6px;
+}
+
+#seek-slider {
+    width: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Bande de la boucle, sous la barre de temps. */
+.loop-region {
+    position: absolute;
+    bottom: 0;
+    height: 5px;
+    border-radius: 3px;
+    background-color: #ff9800;
+    pointer-events: none;
+}
+
+.loop-region.inactive {
+    background-color: #6b5530;
+}
+
+.loop-region[hidden] {
+    display: none;
+}
+
+.loop-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.text-button {
+    min-width: 2.25rem;
+    padding: 0.3rem 0.7rem;
+    font: inherit;
+    font-size: 0.9rem;
+    color: #ffffff;
+    background-color: #1e1e1e;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.text-button:hover:not(:disabled) {
+    border-color: #ff9800;
+}
+
+.text-button[aria-pressed="true"] {
+    color: #121212;
+    background-color: #ff9800;
+    border-color: #ff9800;
+}
+
+.text-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.text-button:focus-visible,
+#seek-slider:focus-visible {
+    outline: 2px solid #4fc3f7;
+    outline-offset: 2px;
+}
+
+.loop-info {
+    min-width: 9rem;
+    font-size: 0.85rem;
+    color: #b0b0b0;
+    font-variant-numeric: tabular-nums;
+}
+
 /* Table de mixage : une rangée de colonnes. Sur un écran trop étroit, la rangée défile
    horizontalement dans sa zone au lieu de faire déborder la page. */
 #track-controls-container {
