@@ -23,22 +23,73 @@ const pendingLevels = [...currentLevels];
 const pendingInstruments = [...currentInstruments];
 const loadTokens = TRACKS.map(() => 0);
 
+// Téléphones, tablettes et appareils peu dotés en mémoire : les 7 pistes décodées pèsent
+// ~630 Mo à 48 kHz, assez pour faire planter l'onglet. On les décode alors à 32 kHz
+// (~420 Mo, bande passante jusqu'à 16 kHz, suffisante pour s'entraîner) et sans cache
+// de variantes supplémentaires.
+const LOW_MEMORY_DEVICE =
+    (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 4) ||
+    window.matchMedia('(pointer: coarse)').matches;
+const LOW_MEMORY_SAMPLE_RATE = 32000;
+
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
-        audioContext =  new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        try {
+            audioContext = LOW_MEMORY_DEVICE
+                ? new AudioContextClass({ sampleRate: LOW_MEMORY_SAMPLE_RATE })
+                : new AudioContextClass();
+        } catch (error) {
+            // Fréquence refusée par le navigateur : on garde celle par défaut.
+            audioContext = new AudioContextClass();
+        }
         // Volume général : toutes les pistes passent par ce nœud avant la sortie.
         masterGain = audioContext.createGain();
         masterGain.connect(audioContext.destination);
     }
+
+    // iOS coupe le Web Audio quand le téléphone est en mode silencieux, sauf si la page
+    // se déclare comme lecteur (Safari 16.4+).
+    if (navigator.audioSession)
+        navigator.audioSession.type = 'playback';
 }
 
-async function loadTrack(trackPath) {
-    try {
+// Télécharge le fichier en signalant l'avancement (octets reçus, taille totale si connue).
+async function fetchWithProgress(trackPath, onProgress) {
     const response = await fetch(trackPath);
     if (!response.ok)
         throw new Error(`HTTP ${response.status}`);
-    const arrayBuffer = await response.arrayBuffer();
-    return await audioContext.decodeAudioData(arrayBuffer);
+
+    const total = Number(response.headers.get('Content-Length')) || 0;
+    if (!onProgress || !response.body)
+        return response.arrayBuffer();
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+    onProgress(0, total);
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done)
+            break;
+        chunks.push(value);
+        received += value.length;
+        onProgress(received, total);
+    }
+
+    const bytes = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return bytes.buffer;
+}
+
+async function loadTrack(trackPath, onProgress) {
+    try {
+        const arrayBuffer = await fetchWithProgress(trackPath, onProgress);
+        return await audioContext.decodeAudioData(arrayBuffer);
     } catch (error) {
         console.error(`Failed to load track: ${trackPath}`, error);
         throw error;
@@ -48,16 +99,16 @@ async function loadTrack(trackPath) {
 // Cache LRU des pistes décodées (chemin -> Promise<AudioBuffer>). Stocker la promesse
 // permet aussi de partager un chargement déjà en cours. Une piste décodée pèse ~90 Mo :
 // on garde les pistes en cours d'utilisation plus quelques variantes récentes seulement.
-const EXTRA_CACHED_BUFFERS = 2;
+const EXTRA_CACHED_BUFFERS = LOW_MEMORY_DEVICE ? 0 : 2;
 const MAX_CACHED_BUFFERS = TRACKS.length + EXTRA_CACHED_BUFFERS;
 const bufferCache = new Map();
 
-function getBuffer(trackPath) {
+function getBuffer(trackPath, onProgress) {
     let promise = bufferCache.get(trackPath);
     if (promise) {
         bufferCache.delete(trackPath); // réinséré en fin de Map = le plus récent
     } else {
-        promise = loadTrack(trackPath).catch(error => {
+        promise = loadTrack(trackPath, onProgress).catch(error => {
             // Un échec n'est pas mis en cache : le prochain essai refera la requête.
             if (bufferCache.get(trackPath) === promise)
                 bufferCache.delete(trackPath);
@@ -72,25 +123,39 @@ function getBuffer(trackPath) {
     return promise;
 }
 
+// Charge les pistes de départ. `onProgress({ receivedBytes, totalBytes, decodedTracks,
+// totalTracks })` est appelé au fil du téléchargement et du décodage.
 // Rejette si une piste ne peut pas être chargée : à l'appelant d'afficher l'erreur.
-export async function preloadAllTracks() {
+export async function preloadAllTracks(onProgress = () => {}) {
     await initAudioContext();
 
     const trackSources = TRACKS.map((_, index) =>
         trackPath(index, currentInstruments[index], currentLevels[index]));
-    const totalTracks = trackSources.length+1;
-    let loadedTracks = 1;
 
-    const updateProgress = () => {
-        loadedTracks++;
-        const progress = (loadedTracks / totalTracks) * 100;
-        document.getElementById('progress-bar').style.width = `${progress}%`;
-    }
-    document.getElementById('progress-bar').style.width = `${(loadedTracks / totalTracks) * 100}%`;
+    // Avancement par piste ; une piste déjà en cache (nouvel essai) compte comme terminée.
+    const received = trackSources.map(() => 0);
+    const sizes = trackSources.map(() => 0);
+    let decodedTracks = 0;
+    const report = () => onProgress({
+        receivedBytes: received.reduce((a, b) => a + b, 0),
+        totalBytes: sizes.every(size => size > 0) ? sizes.reduce((a, b) => a + b, 0) : 0,
+        decodedTracks,
+        totalTracks: trackSources.length,
+    });
+    report();
 
-    const bufferPromises = trackSources.map(async (path) => {
-        const buffer = await getBuffer(path);
-        updateProgress();
+    const bufferPromises = trackSources.map(async (path, index) => {
+        const buffer = await getBuffer(path, (bytes, total) => {
+            received[index] = bytes;
+            sizes[index] = total;
+            report();
+        });
+        decodedTracks++;
+        if (!sizes[index]) {
+            // Taille inconnue ou piste venue du cache : on la compte comme complète.
+            sizes[index] = received[index] = 1;
+        }
+        report();
         return buffer;
     });
 

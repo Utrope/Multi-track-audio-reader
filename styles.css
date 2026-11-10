@@ -12,10 +12,36 @@ html, body {
 
 body {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     /* min-height (et non height) : si le contenu est plus haut que l'écran, la page défile. */
     min-height: 100vh;
+}
+
+/* En-tête : explique la page à un visiteur qui la découvre. */
+#intro {
+    max-width: 52rem;
+    padding: 1.5rem 1rem 0;
+    text-align: center;
+    color: #b0b0b0;
+    line-height: 1.5;
+}
+
+#intro p {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+}
+
+#intro strong {
+    color: #ffffff;
+}
+
+.app-title {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.2vw, 2rem);
+    font-weight: normal;
+    color: #ffffff;
 }
 
 /* Table de mixage : une rangée de colonnes. Sur un écran trop étroit, la rangée défile
@@ -48,6 +74,28 @@ body {
 
 .general-track-control {
     margin-left: clamp(8px, 1.5vw, 36px);
+}
+
+/* Indication de défilement, affichée seulement quand la table ne tient pas en largeur. */
+.scroll-hint {
+    display: none;
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: #8a8a8a;
+}
+
+/* Petit écran : la colonne générale (lecture / stop) passe en premier pour rester visible
+   sans défiler. */
+@media (max-width: 950px) {
+    .general-track-control {
+        order: -1;
+        margin-left: clamp(3px, 0.425vw, 10px);
+        margin-right: clamp(8px, 1.5vw, 36px);
+    }
+
+    .scroll-hint {
+        display: block;
+    }
 }
 
 .track-title {
@@ -202,6 +250,13 @@ body {
     color: #ffffff;
     font-size: 1.5rem;
     z-index: 1000;
+}
+
+.loading-intro {
+    max-width: 36rem;
+    margin: 0.75rem 0 1.5rem;
+    font-size: 1rem;
+    color: #b0b0b0;
 }
 
 #progress-bar-container {
