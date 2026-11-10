@@ -8,7 +8,7 @@ autres pistes, et télécharge la partition qui correspond à ce qu'il entend.
 
 **[▶ Essayer la démo](https://utrope.github.io/Multi-track-audio-reader/)** · aucune installation, fonctionne dans le navigateur
 
-![Interface du lecteur : sept pistes (batterie, basse, guitare, clavier, saxophone alto / flûte, trombone / saxophone ténor, production) et une colonne générale, avec pour chacune Solo, Mute, niveau, partition, volume et lecture](docs/screenshot.png)
+![Interface du lecteur : une barre de temps avec une boucle A-B au-dessus de sept pistes (batterie, basse, guitare, clavier, saxophone alto / flûte, trombone / saxophone ténor, production) et une colonne générale, avec pour chacune Solo, Mute, niveau, partition, volume et lecture](docs/screenshot.png)
 
 ## Fonctionnalités
 
@@ -16,6 +16,9 @@ autres pistes, et télécharge la partition qui correspond à ce qu'il entend.
   clavier, deux pupitres de vents et l'accompagnement complet.
 - **3 niveaux de difficulté par instrument**, changeables en pleine lecture, sans coupure
   ni décalage.
+- **Barre de temps** : voir où l'on en est dans le morceau et s'y déplacer.
+- **Boucle A-B** pour répéter un passage autant de fois que nécessaire, sur toutes les
+  pistes à la fois.
 - **Choix de l'instrument** sur les pupitres de vents (saxophone alto ou flûte, trombone ou
   saxophone ténor).
 - **Solo, Mute et volume** par piste, plus un volume général.
@@ -30,6 +33,10 @@ autres pistes, et télécharge la partition qui correspond à ce qu'il entend.
 - **Lecture synchronisée à l'échantillon près** : toutes les sources sont programmées sur
   le même instant de l'horloge audio. Un changement de niveau arrête l'ancienne source et
   démarre la nouvelle au même instant exact, à la même position.
+- **Boucle A-B sans coupure** : la boucle est appliquée par les sources audio elles-mêmes
+  (`loop` / `loopStart` / `loopEnd`), donc à l'échantillon près et identiquement sur toutes
+  les pistes. La position courante se déduit d'une seule ancre de lecture, qui reste exacte
+  malgré les pauses, les déplacements et les changements de niveau.
 - **Changements concurrents sans incohérence** : chaque piste garde la dernière variante
   demandée et un jeton de requête, si bien que les réponses arrivées en retard sont
   ignorées et que des clics rapides donnent toujours le bon résultat.
@@ -69,6 +76,10 @@ Pour chaque piste :
 
 Colonne « général » : lecture / pause, stop (remet aussi solos et mutes à zéro) et volume
 général.
+
+Barre de temps, au-dessus des pistes : faites-la glisser ou cliquez dessus pour vous
+déplacer. **A** place le début de la boucle à la position actuelle, **B** sa fin et lance
+la boucle ; **Boucle** l'active ou la désactive et **✕** l'efface.
 
 Tout est utilisable au clavier (Tab, Entrée / Espace, flèches pour les sliders).
 

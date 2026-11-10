@@ -2,8 +2,6 @@ import { TRACKS, INITIAL_LEVEL, hasLevels, trackPath, scorePath, levelImage } fr
 
 let audioContext;
 let masterGain;
-let currentTrackTime = 0;
-let startTime = 0;
 let tracks = [];
 
 let isPlaying = false;
@@ -235,13 +233,206 @@ export function setMasterVolume(volume) {
     masterGain.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
 }
 
+// --- Transport : position, lecture, pause, déplacement, boucle A-B ----------------------
+//
+// Ancre de lecture : les sources ont démarré (ou démarreront) à l'instant `playOriginTime`
+// de l'horloge audio, à la position `playOriginOffset` du morceau. La position courante
+// s'en déduit. En pause, le contexte audio est suspendu et son horloge gelée : la position
+// calculée reste donc juste sans autre état à tenir.
+let playOriginTime = 0;
+let playOriginOffset = 0;
+// Position de départ quand aucune source n'existe (avant la lecture ou après Stop).
+let stoppedPosition = 0;
+
+// Boucle A-B. Elle est appliquée par les sources elles-mêmes (loop / loopStart / loopEnd),
+// donc à l'échantillon près et identiquement sur toutes les pistes.
+const MIN_LOOP_LENGTH = 0.5;
+let loop = { start: null, end: null, enabled: false };
+
+function loopActive() {
+    return loop.enabled && loop.start !== null && loop.end !== null && loop.end > loop.start;
+}
+
+function hasSources() {
+    return tracks.some(track => track.source);
+}
+
+// Position du morceau à l'instant `contextTime`. Les sources démarrent toujours à
+// l'intérieur de la boucle quand elle est active, donc le repli ci-dessous suffit.
+function positionAt(contextTime) {
+    let position = playOriginOffset + Math.max(0, contextTime - playOriginTime);
+    if (loopActive() && position >= loop.end)
+        position = loop.start + ((position - loop.end) % (loop.end - loop.start));
+    return position;
+}
+
+function currentPosition() {
+    return hasSources() ? positionAt(audioContext.currentTime) : stoppedPosition;
+}
+
+// Durée jouable : la lecture s'arrête quand la piste la plus courte se termine.
+export function getDuration() {
+    return tracks.length ? Math.min(...tracks.map(track => track.buffer.duration)) : 0;
+}
+
+export function getPlaybackState() {
+    const duration = getDuration();
+    return {
+        position: Math.min(currentPosition(), duration),
+        duration,
+        isPlaying,
+        loop: { start: loop.start, end: loop.end, enabled: loop.enabled, active: loopActive() },
+    };
+}
+
+function clampIntoLoop(offset) {
+    if (loopActive() && (offset < loop.start || offset >= loop.end))
+        return loop.start;
+    return offset;
+}
+
+function startSource(track, when, offset) {
+    track.source = createSource(track.buffer);
+    track.source.loop = loopActive();
+    if (track.source.loop) {
+        track.source.loopStart = loop.start;
+        track.source.loopEnd = loop.end;
+    }
+    track.source.connect(track.gainNode);
+    track.source.start(when, offset);
+}
+
+// Remplace la source d'une piste par une nouvelle qui démarre à `when`, à `offset`.
+// En lecture, l'ancienne s'arrête au même instant exact (aucun trou) ; en pause, elle est
+// coupée tout de suite pour ne pas rejouer un fragment de l'ancienne position à la reprise.
+function swapSource(track, when, offset) {
+    if (track.retiringSource) {
+        disposeSource(track.retiringSource);
+        track.retiringSource = null;
+    }
+
+    const oldSource = track.source;
+    if (oldSource) {
+        if (isPlaying) {
+            oldSource.onended = () => {
+                oldSource.disconnect();
+                if (track.retiringSource === oldSource)
+                    track.retiringSource = null;
+            };
+            oldSource.stop(when);
+            track.retiringSource = oldSource;
+        } else {
+            disposeSource(oldSource);
+        }
+    }
+
+    startSource(track, when, offset);
+}
+
+// (Re)démarre toutes les pistes au même instant, à la position `offset` du morceau.
+function restartAllAt(offset) {
+    const when = audioContext.currentTime + START_DELAY;
+    offset = clampIntoLoop(offset);
+    tracks.forEach(track => swapSource(track, when, offset));
+    playOriginTime = when;
+    playOriginOffset = offset;
+}
+
+function disposeAllSources() {
+    tracks.forEach(track => {
+        if (track.source) {
+            disposeSource(track.source);
+            track.source = null;
+        }
+        if (track.retiringSource) {
+            disposeSource(track.retiringSource);
+            track.retiringSource = null;
+        }
+    });
+}
+
 export async function togglePlayPause() {
     if (!isPlaying) {
         await resumeAudioContext();
-        startAllTracks();
+        if (!hasSources())
+            restartAllAt(stoppedPosition);
+        isPlaying = true;
     } else {
-        pauseAllTracks();
+        isPlaying = false;
+        updatePlayPauseButtons();
+        await audioContext.suspend();
     }
+    updatePlayPauseButtons();
+}
+
+// Se déplace à `position` (en secondes), en lecture, en pause ou à l'arrêt.
+export function seek(position) {
+    const duration = getDuration();
+    position = Math.min(Math.max(0, position), Math.max(0, duration - START_DELAY));
+
+    if (hasSources())
+        restartAllAt(position);
+    else
+        stoppedPosition = clampIntoLoop(position);
+}
+
+// Modifie la boucle puis repart de la position courante avec une ancre cohérente.
+function updateLoop(change) {
+    const playing = hasSources();
+    const wasActive = loopActive();
+    // Position au moment où les nouvelles sources prendront le relais, avec l'ancienne boucle.
+    const position = playing ? positionAt(audioContext.currentTime + START_DELAY) : stoppedPosition;
+
+    change();
+
+    // Boucle inactive avant comme après (ex. on vient seulement de poser A) : les sources en
+    // cours restent valables, inutile de les redémarrer.
+    if (!wasActive && !loopActive())
+        return;
+
+    if (playing)
+        restartAllAt(position);
+    else
+        stoppedPosition = clampIntoLoop(position);
+}
+
+// Place le début (A) ou la fin (B) de la boucle à la position courante. Placer B active
+// la boucle. Renvoie false si le point est refusé (B avant A, ou boucle trop courte).
+export function setLoopPoint(which) {
+    const position = getPlaybackState().position;
+
+    if (which === 'start') {
+        updateLoop(() => {
+            loop.start = position;
+            if (loop.end !== null && loop.end < position + MIN_LOOP_LENGTH) {
+                loop.end = null;
+                loop.enabled = false;
+            }
+        });
+        return true;
+    }
+
+    if (loop.start === null || position < loop.start + MIN_LOOP_LENGTH)
+        return false;
+    updateLoop(() => {
+        loop.end = position;
+        loop.enabled = true;
+    });
+    return true;
+}
+
+export function toggleLoop() {
+    if (loop.start === null || loop.end === null)
+        return;
+    updateLoop(() => {
+        loop.enabled = !loop.enabled;
+    });
+}
+
+export function clearLoop() {
+    updateLoop(() => {
+        loop = { start: null, end: null, enabled: false };
+    });
 }
 
 async function resumeAudioContext() {
@@ -264,49 +455,21 @@ function createSource(buffer) {
     return source;
 }
 
-function startAllTracks() {
-    // Toutes les sources sont programmées sur le même instant pour rester synchronisées.
-    const when = audioContext.currentTime + START_DELAY;
-    tracks.forEach(track => {
-        if (!track.source) {
-            track.source = createSource(track.buffer);
-            track.source.connect(track.gainNode);
-            track.source.start(when, currentTrackTime);
-        }
-    });
-    startTime = when - currentTrackTime;
-    isPlaying = true;
-    updatePlayPauseButtons();
-}
-
-async function pauseAllTracks() {
-    currentTrackTime = audioContext.currentTime - startTime;
-    isPlaying = false;
-    updatePlayPauseButtons();
-    await audioContext.suspend();
-}
-
 function handleTrackEnd() {
 	stopTracks();
 }
 
 export async function stopTracks() {
     if (audioContext) {
-        // Stop remet aussi à zéro les solos et les mutes (les volumes sont conservés).
+        disposeAllSources();
+        // Stop remet aussi à zéro les solos et les mutes (les volumes et la boucle sont
+        // conservés). On repart du début, ou du début de la boucle si elle est active.
         tracks.forEach(track => {
-            if (track.source) {
-                disposeSource(track.source);
-                track.source = null;
-            }
-            if (track.retiringSource) {
-                disposeSource(track.retiringSource);
-                track.retiringSource = null;
-            }
             track.isSolo = false;
             track.isMuted = false;
         });
         isPlaying = false;
-        currentTrackTime = 0;
+        stoppedPosition = clampIntoLoop(0);
         applyAllGains();
     }
 }
@@ -348,23 +511,13 @@ function replaceTrackBuffer(trackIndex, buffer) {
     if (!track.source)
         return;
 
-    // Bascule au même instant exact : l'ancienne source s'arrête quand la nouvelle démarre,
-    // à la même position que les autres pistes.
+    // Bascule au même instant exact, à la même position que les autres pistes. Si la
+    // lecture est programmée mais pas encore commencée, on se cale sur son démarrage.
     const when = audioContext.currentTime + START_DELAY;
-    if (track.retiringSource)
-        disposeSource(track.retiringSource);
-    const oldSource = track.source;
-    oldSource.onended = null;
-    oldSource.stop(when);
-    // Gardée pour que Stop puisse la couper avant son arrêt programmé (ex. si en pause).
-    track.retiringSource = oldSource;
-
-    track.source = createSource(buffer);
-    track.source.connect(track.gainNode);
-    if (when >= startTime)
-        track.source.start(when, when - startTime);
+    if (when < playOriginTime)
+        swapSource(track, playOriginTime, playOriginOffset);
     else
-        track.source.start(startTime, 0); // lecture programmée mais pas encore commencée
+        swapSource(track, when, positionAt(when));
 }
 
 // Charge la variante (instrument + niveau) demandée en dernier pour une piste.
