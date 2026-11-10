@@ -1,35 +1,10 @@
+import { TRACKS, INITIAL_LEVEL, hasLevels, trackPath, scorePath, levelImage } from './config.js';
+
 let audioContext;
 let masterGain;
 let currentTrackTime = 0;
-let startTime = 0; 
+let startTime = 0;
 let tracks = [];
-
-const trackSources = [
-    './tracks/lvl1/drums_lvl1.mp3',
-    './tracks/lvl1/bass_lvl1.mp3',
-    './tracks/lvl1/guitar_lvl1.mp3',
-    './tracks/lvl1/keyboard_lvl1.mp3',
-    './tracks/lvl1/altoSax_lvl1.mp3',
-    './tracks/lvl1/trombone_lvl1.mp3',
-    './tracks/Infini_prod.mp3',
-];
-
-const trackNames = [
-    'drums.png',
-    'bass.png',
-    'guitar.png',
-    'keyboard.png',
-    'altoSax.png',
-    'trombone.png',
-    'prod.png'
-];
-
-const instrumentSources = {
-    altoSax: './tracks/lvl1/altoSax_lvl1.mp3',
-    flute: './tracks/lvl1/flute_lvl1.mp3',
-    trombone: './tracks/lvl1/trombone_lvl1.mp3',
-    tenor: './tracks/lvl1/tenor_lvl1.mp3'
-};
 
 let isPlaying = false;
 
@@ -39,32 +14,14 @@ const MIN_VOLUME = 0.0;
 // Marge (s) pour programmer un démarrage synchronisé de plusieurs sources.
 const START_DELAY = 0.05;
 
-const maxLevels = [
-    3,
-    3,
-    3,
-    3,
-    3,
-    3,
-    4
-];
-
-export const initialLevels = [
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    4
-]
-
-const currentLevels = [...initialLevels];
+// Variante (instrument + niveau) réellement chargée pour chaque piste.
+const currentLevels = TRACKS.map(() => INITIAL_LEVEL);
+const currentInstruments = TRACKS.map(track => track.instruments[0]);
 
 // Variante demandée en dernier (peut être en cours de chargement) pour chaque piste.
-const pendingLevels = [...initialLevels];
-const pendingInstruments = trackNames.map(name => name.split('.')[0]);
-const loadTokens = trackNames.map(() => 0);
+const pendingLevels = [...currentLevels];
+const pendingInstruments = [...currentInstruments];
+const loadTokens = TRACKS.map(() => 0);
 
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
@@ -92,7 +49,7 @@ async function loadTrack(trackPath) {
 // permet aussi de partager un chargement déjà en cours. Une piste décodée pèse ~90 Mo :
 // on garde les pistes en cours d'utilisation plus quelques variantes récentes seulement.
 const EXTRA_CACHED_BUFFERS = 2;
-const MAX_CACHED_BUFFERS = trackSources.length + EXTRA_CACHED_BUFFERS;
+const MAX_CACHED_BUFFERS = TRACKS.length + EXTRA_CACHED_BUFFERS;
 const bufferCache = new Map();
 
 function getBuffer(trackPath) {
@@ -116,9 +73,11 @@ function getBuffer(trackPath) {
 }
 
 // Rejette si une piste ne peut pas être chargée : à l'appelant d'afficher l'erreur.
-export async function preloadAllTracks(trackSources) {
+export async function preloadAllTracks() {
     await initAudioContext();
 
+    const trackSources = TRACKS.map((_, index) =>
+        trackPath(index, currentInstruments[index], currentLevels[index]));
     const totalTracks = trackSources.length+1;
     let loadedTracks = 1;
 
@@ -129,8 +88,8 @@ export async function preloadAllTracks(trackSources) {
     }
     document.getElementById('progress-bar').style.width = `${(loadedTracks / totalTracks) * 100}%`;
 
-    const bufferPromises = trackSources.map(async (trackPath) => {
-        const buffer = await getBuffer(trackPath);
+    const bufferPromises = trackSources.map(async (path) => {
+        const buffer = await getBuffer(path);
         updateProgress();
         return buffer;
     });
@@ -288,15 +247,16 @@ export function toggleSolo(trackIndex) {
     applyAllGains();
 }
 
-export function toggleLocalTrackPlayPause(trackIndex)
+export async function toggleLocalTrackPlayPause(trackIndex)
 {
     const track = tracks[trackIndex];
-
-    if (!isPlaying || track.isSolo)
-        togglePlayPause();
+    const shouldToggle = !isPlaying || track.isSolo;
 
     if (!track.isSolo)
         toggleSolo(trackIndex);
+
+    if (shouldToggle)
+        await togglePlayPause();
 }
 
 // Arrête définitivement une source : sans onended, elle ne peut plus déclencher stopTracks().
@@ -345,44 +305,50 @@ async function loadTrackVariant(trackIndex) {
     const instrument = pendingInstruments[trackIndex];
 
     try {
-        const buffer = await getBuffer(`./tracks/lvl${level}/${instrument}_lvl${level}.mp3`);
+        const buffer = await getBuffer(trackPath(trackIndex, instrument, level));
         if (token !== loadTokens[trackIndex])
             return false;
 
         replaceTrackBuffer(trackIndex, buffer);
         currentLevels[trackIndex] = level;
-        trackNames[trackIndex] = `${instrument}.png`;
+        currentInstruments[trackIndex] = instrument;
     } catch (error) {
         if (token !== loadTokens[trackIndex])
             return false;
 
         // Échec : on revient à la variante réellement chargée.
         pendingLevels[trackIndex] = currentLevels[trackIndex];
-        pendingInstruments[trackIndex] = trackNames[trackIndex].split('.')[0];
+        pendingInstruments[trackIndex] = currentInstruments[trackIndex];
         return false;
     }
 
     const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
-    const downloadButton = document.getElementById(`downloadButton-${trackIndex}`);
     if (levelButtonImage)
-        levelButtonImage.src = `./images/Levels/lvl${level}.png`;
-    if (downloadButton)
-        downloadButton.onclick = () => downloadPDF(trackIndex, currentLevels[trackIndex]);
+        levelButtonImage.src = levelImage(level);
+
+    document.querySelectorAll(`#track-${trackIndex} [data-instrument]`).forEach(image => {
+        image.classList.toggle('active', image.dataset.instrument === instrument);
+    });
 
     return true;
 }
 
 export async function switchTrackLevel(trackIndex) {
-    if (!trackSources[trackIndex].includes('lvl'))
+    if (!hasLevels(trackIndex))
         return false;
 
-    pendingLevels[trackIndex] = pendingLevels[trackIndex] % maxLevels[trackIndex] + 1;
+    pendingLevels[trackIndex] = pendingLevels[trackIndex] % TRACKS[trackIndex].levels + 1;
     return loadTrackVariant(trackIndex);
 }
 
-export async function downloadPDF(i, level) {
-    const instrumentName = trackNames[i].split('.')[0];
-    const pdfPath = `scores/${instrumentName}/lvl${level}.pdf`;
+// Télécharge la partition de l'instrument et du niveau actuellement chargés.
+export async function downloadPDF(trackIndex) {
+    if (!hasLevels(trackIndex))
+        return;
+
+    const instrumentName = currentInstruments[trackIndex];
+    const level = currentLevels[trackIndex];
+    const pdfPath = scorePath(instrumentName, level);
     try {
         // Simple vérification d'existence, pour ne pas télécharger une page 404.
         const response = await fetch(pdfPath, { method: 'HEAD' });
@@ -409,14 +375,3 @@ export async function switchInstrument(trackIndex, newInstrument) {
     pendingInstruments[trackIndex] = newInstrument;
     return loadTrackVariant(trackIndex);
 }
-
-function handleErrors(fn) {
-    return function(...params) {
-        return fn(...params).catch(error => {
-            console.error('An error occurred:', error);
-        });
-    }
-}
-
-togglePlayPause = handleErrors(togglePlayPause);
-stopTracks = handleErrors(stopTracks);

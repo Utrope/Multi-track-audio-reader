@@ -171,6 +171,21 @@ body, html {
 }
 .instrument-switcher img {
     width: 48%;
+    opacity: 0.5;
+}
+
+.instrument-switcher img.active {
+    opacity: 1;
+}
+
+[data-action] {
+    cursor: pointer;
+}
+
+/* Garde la place d'un bouton sans usage pour cette piste (alignement des colonnes). */
+.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 #loading-screen {

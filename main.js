@@ -1,27 +1,9 @@
-import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause, 
-  toggleMute, setVolume, setMasterVolume, toggleSolo, switchTrackLevel, initialLevels, downloadPDF, switchInstrument } from './audioLogic.js';
-
-  const trackSources = [
-    './tracks/lvl1/drums_lvl1.mp3',
-    './tracks/lvl1/bass_lvl1.mp3',
-    './tracks/lvl1/guitar_lvl1.mp3',
-    './tracks/lvl1/keyboard_lvl1.mp3',
-    './tracks/lvl1/altoSax_lvl1.mp3',
-    './tracks/lvl1/trombone_lvl1.mp3',
-    './tracks/Infini_prod.mp3',
-];
-
-const trackNames = [
-    'drums.png',
-    'bass.png',
-    'guitar.png',
-    'keyboard.png',
-    'altoSax.png',
-    'trombone.png',
-    'prod.png'
-];
+import { initAudioContext, preloadAllTracks, togglePlayPause, stopTracks, toggleLocalTrackPlayPause,
+  toggleMute, setVolume, setMasterVolume, toggleSolo, switchTrackLevel, downloadPDF, switchInstrument } from './audioLogic.js';
+import { TRACKS, INITIAL_LEVEL, hasLevels, instrumentImage, levelImage } from './config.js';
 
 document.addEventListener('DOMContentLoaded', loadApp);
+document.getElementById('retry-button').addEventListener('click', loadApp);
 
 async function loadApp() {
     const message = document.getElementById('loading-message');
@@ -31,7 +13,7 @@ async function loadApp() {
 
     try {
         await initAudioContext();
-        await preloadAllTracks(trackSources);
+        await preloadAllTracks();
     } catch (error) {
         // Les pistes déjà chargées restent en cache : réessayer ne recharge que les échecs.
         message.textContent = 'Impossible de charger les pistes audio. Vérifiez votre connexion.';
@@ -39,124 +21,126 @@ async function loadApp() {
         return;
     }
 
-    createTrackControls(trackSources.length);
+    createTrackControls();
     document.getElementById('loading-screen').style.display = 'none';
 }
 
-document.getElementById('retry-button').addEventListener('click', loadApp);
+// --- Construction de l'interface -------------------------------------------------------
 
-function createTrackControls(numTracks) {
-    const container = document.getElementById('track-controls-container');
+function trackTitleHTML(trackIndex) {
+    const { instruments } = TRACKS[trackIndex];
 
-    for (let i = 0; i < numTracks; i++) {
-        const trackControl = document.createElement('div');
-        trackControl.className = 'track-control';
-        trackControl.id = `track-${i}`;
+    if (instruments.length === 1) {
+        return `<img src="${instrumentImage(instruments[0])}" alt="${instruments[0]}" class="track-title track-title-image">`;
+    }
 
-        const initialLevelImage = `images/Levels/lvl${initialLevels[i]}.png`;
-        const instrumentName = trackNames[i].split('.')[0];
+    const choices = instruments.map((instrument, choiceIndex) => `
+        <img src="${instrumentImage(instrument)}" alt="${instrument}"
+            class="${choiceIndex === 0 ? 'active' : ''}"
+            data-action="instrument" data-track="${trackIndex}" data-instrument="${instrument}">`).join('');
+    return `<div class="instrument-switcher">${choices}</div>`;
+}
 
-        let instrumentSwitcher = '';
-        if (i === 4 || i === 5) {
-          const instrument1 = i === 4 ? 'altoSax' : 'trombone';
-          const instrument2 = i === 4 ? 'flute' : 'tenorSax';
-          instrumentSwitcher = `
-              <div class="instrument-switcher">
-                  <img src="images/Instruments/${instrument1}.png" alt="${instrument1}"
-                      id="instrument-${instrument1}-${i}" style="opacity: 1; cursor: pointer;"
-                      onclick="switchInstrumentUI(${i}, '${instrument1}', '${instrument2}')">
-                  <img src="images/Instruments/${instrument2}.png" alt="${instrument2}"
-                      id="instrument-${instrument2}-${i}" style="opacity: 0.5; cursor: pointer;"
-                      onclick="switchInstrumentUI(${i}, '${instrument2}', '${instrument1}')">
-              </div>
-          `;
-      }
+function trackControlHTML(trackIndex) {
+    // Une piste sans niveaux garde des boutons invisibles pour conserver l'alignement des colonnes.
+    const levelsClass = hasLevels(trackIndex) ? '' : ' is-hidden';
 
-        trackControl.innerHTML = `
+    return `
         <div class="track-title">
-                ${instrumentSwitcher || `<img src="images/Instruments/${trackNames[i]}" alt="${instrumentName}" class="track-title track-title-image">`}
+            ${trackTitleHTML(trackIndex)}
         </div>
         <div class="upper-part">
           <div class="left-buttons">
-            <img src="images/Solo/Solo.png" alt="Solo" class="track-button mute-button" onclick="toggleSolo(${i})" id="soloButton-${i}" style="cursor: pointer;">
-            <img src="images/Mute/mute.png" alt="Mute" class="track-button mute-button" onclick="toggleMute(${i})" id="muteButton-${i}" style="cursor: pointer;">
-            <img src="${initialLevelImage}" alt="Level" class="track-button level-button" onclick="switchTrackLevel(${i})" id="levelButton-${i}" style="cursor: pointer;">
-            <img src="images/Download/Download.png" alt="Download" class="track-button level-button" onclick="downloadPDF('${i}', ${initialLevels[i]})" id="downloadButton-${i}">
-            </div>
+            <img src="images/Solo/Solo.png" alt="Solo" class="track-button mute-button" data-action="solo" data-track="${trackIndex}" id="soloButton-${trackIndex}">
+            <img src="images/Mute/mute.png" alt="Mute" class="track-button mute-button" data-action="mute" data-track="${trackIndex}" id="muteButton-${trackIndex}">
+            <img src="${levelImage(INITIAL_LEVEL)}" alt="Level" class="track-button level-button${levelsClass}" data-action="level" data-track="${trackIndex}" id="levelButton-${trackIndex}">
+            <img src="images/Download/Download.png" alt="Download" class="track-button level-button${levelsClass}" data-action="download" data-track="${trackIndex}" id="downloadButton-${trackIndex}">
+          </div>
           <div class="volume-control">
-            <input type="range" min="0" max="100" value="100" id="volume-slider-${i}" oninput="setVolume(${i}, this.value)">
+            <input type="range" min="0" max="100" value="100" id="volume-slider-${trackIndex}" data-action="volume" data-track="${trackIndex}">
           </div>
         </div>
         <div class="lower-part">
-        <div class="play-pause-button">
-          <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" onclick="handleLocalTrackPlayPause(${i})" id="playPauseButton-${i}" style="cursor: pointer;">
+          <div class="play-pause-button">
+            <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" data-action="track-play" data-track="${trackIndex}" id="playPauseButton-${trackIndex}">
+          </div>
         </div>
-      </div>
     `;
-  
-      container.appendChild(trackControl);
-    }
+}
 
-        const generalTrackControl = document.createElement('div');
-        generalTrackControl.className = 'general-track-control';
-
-        generalTrackControl.innerHTML = `
+function generalControlHTML() {
+    return `
         <div class="track-title">
-                <img src="images/Instruments/general.png" class="track-title-image">
+            <img src="images/Instruments/general.png" alt="Général" class="track-title-image">
         </div>
-      <div class="upper-part">
-      <div class="stop-button">
-        <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" onclick="stopTrack()" id="stopButton" style="cursor: pointer;">
-      </div>
-      <div class="volume-control">
-        <input type="range" min="0" max="100" value="100" id="volume-slider-${numTracks}" oninput="setMasterVolume(this.value)">
-      </div>
-    </div>
-    <div class="lower-part">
-      <div class="play-pause-button">
-        <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" onclick="handlePlayPause()" id="playPauseButton" style="cursor: pointer;">
-      </div>
-    </div>
+        <div class="upper-part">
+          <div class="stop-button">
+            <img src="images/Stop/Stop_neg.png" alt="Stop" class="track-button stop-button" data-action="stop" id="stopButton">
+          </div>
+          <div class="volume-control">
+            <input type="range" min="0" max="100" value="100" id="volume-slider-master" data-action="master-volume">
+          </div>
+        </div>
+        <div class="lower-part">
+          <div class="play-pause-button">
+            <img src="images/PlayPause/Play_pause_neg.png" alt="Play/Pause" data-action="play" id="playPauseButton">
+          </div>
+        </div>
     `;
-
-  container.appendChild(generalTrackControl);
 }
 
-  
-  window.handlePlayPause = async () => {
-    await togglePlayPause();
-  };
-  
-  window.stopTrack = () => {
-    stopTracks();
-  };
-  
-  window.toggleMute = toggleMute;
-  window.setVolume = (trackIndex, volume) => {
-    setVolume(trackIndex, volume);
-  };
-  window.setMasterVolume = setMasterVolume;
+function createTrackControls() {
+    const container = document.getElementById('track-controls-container');
 
-window.toggleSolo = (trackIndex) => {
-  toggleSolo(trackIndex);
+    TRACKS.forEach((_, trackIndex) => {
+        const trackControl = document.createElement('div');
+        trackControl.className = 'track-control';
+        trackControl.id = `track-${trackIndex}`;
+        trackControl.innerHTML = trackControlHTML(trackIndex);
+        container.appendChild(trackControl);
+    });
+
+    const generalTrackControl = document.createElement('div');
+    generalTrackControl.className = 'general-track-control';
+    generalTrackControl.innerHTML = generalControlHTML();
+    container.appendChild(generalTrackControl);
+}
+
+// --- Événements -------------------------------------------------------------------------
+// Un seul écouteur par type d'événement : chaque élément interactif porte data-action
+// (et data-track pour une piste).
+
+const clickActions = {
+    play: () => togglePlayPause(),
+    stop: () => stopTracks(),
+    solo: (trackIndex) => toggleSolo(trackIndex),
+    mute: (trackIndex) => toggleMute(trackIndex),
+    level: (trackIndex) => switchTrackLevel(trackIndex),
+    download: (trackIndex) => downloadPDF(trackIndex),
+    'track-play': (trackIndex) => toggleLocalTrackPlayPause(trackIndex),
+    instrument: (trackIndex, element) => switchInstrument(trackIndex, element.dataset.instrument),
 };
 
-window.handleLocalTrackPlayPause = (trackIndex) => {
-  toggleLocalTrackPlayPause(trackIndex);
-}
-
-window.switchTrackLevel = (trackIndex) => {
-  switchTrackLevel(trackIndex);
-}
-
-window.downloadPDF = (instrumentName, initialLevels) => {
-  downloadPDF(instrumentName, initialLevels);
-}
-
-window.switchInstrumentUI = async (trackIndex, newInstrument, oldInstrument) => {
-  const switched = await switchInstrument(trackIndex, newInstrument);
-  if (!switched) return;
-
-  document.getElementById(`instrument-${newInstrument}-${trackIndex}`).style.opacity = '1';
-  document.getElementById(`instrument-${oldInstrument}-${trackIndex}`).style.opacity = '0.5';
+const inputActions = {
+    volume: (trackIndex, element) => setVolume(trackIndex, element.value),
+    'master-volume': (_, element) => setMasterVolume(element.value),
 };
+
+function dispatch(actions, event) {
+    const element = event.target.closest('[data-action]');
+    if (!element)
+        return;
+
+    const action = actions[element.dataset.action];
+    if (!action)
+        return;
+
+    const trackIndex = Number(element.dataset.track);
+    Promise.resolve()
+        .then(() => action(trackIndex, element))
+        .catch(error => console.error(`Action "${element.dataset.action}" failed:`, error));
+}
+
+const controlsContainer = document.getElementById('track-controls-container');
+controlsContainer.addEventListener('click', event => dispatch(clickActions, event));
+controlsContainer.addEventListener('input', event => dispatch(inputActions, event));
