@@ -142,8 +142,9 @@ window.downloadPDF = (instrumentName, initialLevels) => {
 }
 
 window.switchInstrumentUI = async (trackIndex, newInstrument, oldInstrument) => {
-  await switchInstrument(trackIndex, newInstrument);
-  
+  const switched = await switchInstrument(trackIndex, newInstrument);
+  if (!switched) return;
+
   document.getElementById(`instrument-${newInstrument}-${trackIndex}`).style.opacity = '1';
   document.getElementById(`instrument-${oldInstrument}-${trackIndex}`).style.opacity = '0.5';
 };

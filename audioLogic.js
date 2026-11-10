@@ -23,11 +23,6 @@ const trackNames = [
     'prod.png'
 ];
 
-let activeInstruments = {
-    4: 'altoSax',
-    5: 'trombone'
-};
-
 const instrumentSources = {
     altoSax: './tracks/lvl1/altoSax_lvl1.mp3',
     flute: './tracks/lvl1/flute_lvl1.mp3',
@@ -66,6 +61,11 @@ export const initialLevels = [
 
 const currentLevels = [...initialLevels];
 
+// Variante demandée en dernier (peut être en cours de chargement) pour chaque piste.
+const pendingLevels = [...initialLevels];
+const pendingInstruments = trackNames.map(name => name.split('.')[0]);
+const loadTokens = trackNames.map(() => 0);
+
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
         audioContext =  new (window.AudioContext || window.webkitAudioContext)();
@@ -75,6 +75,8 @@ export async function initAudioContext() {
 async function loadTrack(trackPath) {
     try {
     const response = await fetch(trackPath);
+    if (!response.ok)
+        throw new Error(`HTTP ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
     return await audioContext.decodeAudioData(arrayBuffer);
     } catch (error) {
@@ -215,7 +217,7 @@ export async function stopTracks() {
     if (audioContext) {
         tracks.forEach((track, index) => {
             if (track.source) {
-                track.source.stop();
+                disposeSource(track.source);
                 track.source = null;
                 if (track.isSolo)
                     toggleSolo(index);
@@ -290,54 +292,75 @@ export function toggleLocalTrackPlayPause(trackIndex)
         toggleSolo(trackIndex);
 }
 
-export async function switchTrackLevel(trackIndex, instrumentName) {    
-    const originalTrackPath = trackSources[trackIndex];
-    console.log(`changing levels from ${trackSources[trackIndex]}`);
-
-    if (!originalTrackPath.includes('lvl')) {
-        return;
+// Arrête définitivement une source : sans onended, elle ne peut plus déclencher stopTracks().
+function disposeSource(source) {
+    source.onended = null;
+    try {
+        source.stop();
+    } catch (error) {
+        // Source jamais démarrée : rien à arrêter.
     }
+    source.disconnect();
+}
 
-    let nextLevel = currentLevels[trackIndex] + 1;
-    if (nextLevel > maxLevels[trackIndex]) {
-        nextLevel = 1;
-    }
-
-    const levelTrackPath = originalTrackPath.replace(/lvl1/g, `lvl${nextLevel}`);
-    const exists = await fileExists(levelTrackPath);
-
-    if (!exists)
-        return;
-
-    const levelBuffer = await loadTrack(levelTrackPath);
+// Remplace le buffer d'une piste, qu'elle soit en lecture, en pause ou à l'arrêt.
+function replaceTrackBuffer(trackIndex, buffer) {
     const track = tracks[trackIndex];
+    track.buffer = buffer;
 
-    if (track.source) 
-    {
-        const currentPlaybackTime = audioContext.currentTime - startTime;
+    if (!track.source)
+        return;
 
-        track.source.disconnect();
-        track.source = null;
+    const currentPlaybackTime = audioContext.currentTime - startTime;
+    disposeSource(track.source);
 
-        track.buffer = levelBuffer;
-        track.source = createSource(track.buffer);
+    track.source = createSource(buffer);
+    track.source.connect(track.gainNode);
+    track.gainNode.connect(audioContext.destination);
+    track.source.start(0, currentPlaybackTime);
+}
 
-        track.source.connect(track.gainNode);
-        track.gainNode.connect(audioContext.destination);
+// Charge la variante (instrument + niveau) demandée en dernier pour une piste.
+// Un jeton par piste permet d'ignorer les réponses arrivées après une requête plus récente.
+async function loadTrackVariant(trackIndex) {
+    const token = ++loadTokens[trackIndex];
+    const level = pendingLevels[trackIndex];
+    const instrument = pendingInstruments[trackIndex];
 
-        track.source.start(0, currentPlaybackTime);
-    } 
+    try {
+        const buffer = await loadTrack(`./tracks/lvl${level}/${instrument}_lvl${level}.mp3`);
+        if (token !== loadTokens[trackIndex])
+            return false;
 
-    currentLevels[trackIndex] = nextLevel;
+        replaceTrackBuffer(trackIndex, buffer);
+        currentLevels[trackIndex] = level;
+        trackNames[trackIndex] = `${instrument}.png`;
+    } catch (error) {
+        if (token !== loadTokens[trackIndex])
+            return false;
+
+        // Échec : on revient à la variante réellement chargée.
+        pendingLevels[trackIndex] = currentLevels[trackIndex];
+        pendingInstruments[trackIndex] = trackNames[trackIndex].split('.')[0];
+        return false;
+    }
 
     const levelButtonImage = document.getElementById(`levelButton-${trackIndex}`);
     const downloadButton = document.getElementById(`downloadButton-${trackIndex}`);
-    if (levelButtonImage) {
-        levelButtonImage.src = `./images/Levels/lvl${nextLevel}.png`;
-    }
-
+    if (levelButtonImage)
+        levelButtonImage.src = `./images/Levels/lvl${level}.png`;
     if (downloadButton)
-        downloadButton.onclick = () => downloadPDF(trackIndex, nextLevel);
+        downloadButton.onclick = () => downloadPDF(trackIndex, currentLevels[trackIndex]);
+
+    return true;
+}
+
+export async function switchTrackLevel(trackIndex) {
+    if (!trackSources[trackIndex].includes('lvl'))
+        return false;
+
+    pendingLevels[trackIndex] = pendingLevels[trackIndex] % maxLevels[trackIndex] + 1;
+    return loadTrackVariant(trackIndex);
 }
 
 export async function downloadPDF(i, level) {
@@ -365,34 +388,11 @@ export async function downloadPDF(i, level) {
 }
 
 export async function switchInstrument(trackIndex, newInstrument) {
-    const currentLevel = currentLevels[trackIndex];
-    const newTrackPath = `./tracks/lvl${currentLevel}/${newInstrument}_lvl${currentLevel}.mp3`;
+    if (pendingInstruments[trackIndex] === newInstrument)
+        return false;
 
-    const exists = await fileExists(newTrackPath);
-    if (!exists) return;
-
-    const newBuffer = await loadTrack(newTrackPath);
-    const track = tracks[trackIndex];
-
-
-    if (track.source) {
-        const currentPlaybackTime = audioContext.currentTime - startTime;
-        track.source.disconnect();
-
-        track.buffer = newBuffer;
-        track.source = createSource(newBuffer);
-        track.source.connect(track.gainNode);
-        track.gainNode.connect(audioContext.destination);
-
-        track.source.start(0, currentPlaybackTime);
-    }
-
-    activeInstruments[trackIndex] = newInstrument;
-    trackNames[trackIndex] = `${newInstrument}.png`;
-    const referenceTrackPath = `./tracks/lvl1/${newInstrument}_lvl1.mp3`;
-
-    trackSources[trackIndex] = referenceTrackPath;
-    console.log(`changing instruments to ${newTrackPath}`);
+    pendingInstruments[trackIndex] = newInstrument;
+    return loadTrackVariant(trackIndex);
 }
 
 function handleErrors(fn) {
@@ -400,15 +400,6 @@ function handleErrors(fn) {
         return fn(...params).catch(error => {
             console.error('An error occurred:', error);
         });
-    }
-}
-
-async function fileExists(url) {
-    try{
-        const response = await fetch(url, {method: 'HEAD'});
-        return response.ok;
-    } catch (error) {
-        return false;
     }
 }
 
