@@ -3,19 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Outil Audio Multipistes</title>
+<title>Infini – lecteur multipiste</title>
+<meta name="description" content="Lecteur multipiste pour répéter le morceau Infini instrument par instrument : solo, mute, trois niveaux de difficulté et partitions PDF.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="loading-screen">
+        <h1 class="app-title">Infini – lecteur multipiste</h1>
+        <p class="loading-intro">7 pistes audio sont téléchargées une fois pour toutes, puis tout se joue sans attente.</p>
         <p id="loading-message" role="status">Chargement en cours...</p>
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>
         <button id="retry-button" type="button" hidden>Réessayer</button>
     </div>
-    <div id="track-controls-container">
-    </div>
+    <header id="intro">
+        <h1 class="app-title">Infini – lecteur multipiste</h1>
+        <p>
+            Travaillez le morceau instrument par instrument.
+            <strong>▶</strong> lance la lecture,
+            <strong>Solo</strong> et <strong>Mute</strong> isolent ou coupent une piste,
+            le <strong>chiffre</strong> change le niveau de difficulté
+            et la <strong>flèche</strong> télécharge la partition.
+        </p>
+        <p class="scroll-hint" aria-hidden="true">Faites glisser la table vers la gauche pour voir toutes les pistes →</p>
+    </header>
+    <main id="track-controls-container">
+    </main>
     <script src="audioLogic.js" type="module"></script>
     <script src="main.js" type="module"></script>
     </body>
