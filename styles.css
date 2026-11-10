@@ -1,49 +1,53 @@
-body, html {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    max-width: 100vw;
-    margin: 0;
-    padding: 0;
+*, *::before, *::after {
     box-sizing: border-box;
 }
 
-#track-controls-container {
-    margin-top: 2%;
-    margin-left: 1%;
-    display: flex;
-    flex-wrap: wrap;
-    width: 100vw;
-    height: auto;
+html, body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
 }
 
-.track-control {
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* min-height (et non height) : si le contenu est plus haut que l'écran, la page défile. */
+    min-height: 100vh;
+}
+
+/* Table de mixage : une rangée de colonnes. Sur un écran trop étroit, la rangée défile
+   horizontalement dans sa zone au lieu de faire déborder la page. */
+#track-controls-container {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    padding: 2vw 1vw 0;
+    /* Centré tant que tout tient ; aligné à gauche (et défilable) sinon. */
+    justify-content: safe center;
+}
+
+/* Les tailles suivent la largeur de l'écran (vw), bornées pour rester utilisables
+   sur petit écran et ne pas grossir à l'infini sur très grand écran. */
+.track-control,
+.general-track-control {
+    flex: none;
+    width: clamp(76px, 8vw, 200px);
+    box-sizing: content-box;
+    padding: clamp(10px, 1.5vw, 36px);
+    margin: clamp(3px, 0.425vw, 10px);
+    border-radius: 4px;
     background-color: #1e1e1e;
-    padding: 1.7%;
-    border-radius: 0.85%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0.425%;
-    width: 8%;
-    height: auto;
 }
 
 .general-track-control {
-    background-color: #1e1e1e;
-    padding: 1.7%;
-    border-radius: 0.85%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0.425%;
-    width: 8%;
-    height: auto;
-    margin-left: 2%;
+    margin-left: clamp(8px, 1.5vw, 36px);
 }
 
 .track-title {
@@ -67,95 +71,97 @@ body, html {
     margin-bottom: 1.7%;
 }
 
-
 .left-buttons {
-    display: block;
-    align-items: center;
     width: 100%;
-    height: auto;
 }
 
-.left-buttons img 
-{
+.left-buttons .icon-button {
     margin: 0;
     padding: 0;
 }
 
 .lower-part {
+    width: 100%;
+}
+
+.volume-control {
+    margin-left: 30%;
+    width: 15%;
+}
+
+/* Slider vertical standard : minimum en bas grâce à direction: rtl. */
+.volume-control input[type="range"] {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    height: max(120px, 24vh);
+    width: clamp(16px, 2vw, 40px);
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Piste coupée par un mute ou par le solo d'une autre piste : le volume reste visible. */
+.volume-control input[type="range"].silenced {
+    opacity: 0.35;
+}
+
+/* --- Boutons à image -------------------------------------------------------------------- */
+
+.icon-button {
     display: block;
-    align-items: center;
-    gap: 0.425%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.icon-button img {
+    display: block;
     width: 100%;
     height: auto;
 }
 
-
-.volume-control {
-    display: block;
-    align-items: right;
-    justify-content: right;
-    margin-left: 30%;
-    width: 15%;
-    height: auto;
+/* Contour visible uniquement à la navigation clavier. */
+.icon-button:focus-visible,
+.volume-control input[type="range"]:focus-visible,
+#retry-button:focus-visible {
+    outline: 2px solid #4fc3f7;
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
-
-.volume-control input[type="range"] {
-    writing-mode: vertical-lr;
-    -webkit-appearance: slider-vertical;
-    -moz-appearance: slider-vertical;
-    appearance: slider-vertical;
-    height: 24vh;
-    width: 2vw;
-    transform: rotate(180deg);
+.track-button {
+    box-sizing: content-box;
+    margin: 0.425%;
+    padding: 0.85% 1.7%;
 }
 
 .mute-button {
     width: 100%;
-    height: auto;
-    cursor: pointer;
-    display: block;
-}
-
-.play-pause-button img{
-    width: 100%;
-    height: auto;
-}
-
-.stop-button {
-    display: block;
-    align-items: center;
-    gap: 0.425%;
-    width: 100%;
-    height: auto;
-}
-
-.track-buttons {
-    display: block;
-    flex-direction: column;
-    margin-bottom: 0.425%;
-}
-
-.track-button {
-    margin: 0.425%;
-    padding: 0.85% 1.7%;
-    border: none;
-    border-radius: 0.425%;
-    cursor: pointer;
-    color: #ffffff;
-}
-
-.track-button img.mute-button {
-    margin: 0.425% auto;
-    width: 10%;
 }
 
 .level-button {
-    width:70%;
-    height: auto;
-    cursor: pointer;
-    display: block;
+    width: 70%;
     margin: 0.425% auto;
+}
+
+.stop-button {
+    width: 100%;
+}
+
+.play-pause-button .icon-button {
+    width: 100%;
+}
+
+.play-pause-button .icon-button img {
+    transition: filter 0.2s ease;
+}
+
+/* En lecture : halo lumineux autour de l'icône. */
+.play-pause-button .icon-button[aria-pressed="true"] img {
+    filter: drop-shadow(0 0 clamp(4px, 0.6vw, 12px) #4fc3f7) brightness(1.2);
 }
 
 .instrument-switcher {
@@ -164,21 +170,35 @@ body, html {
     justify-content: center;
     margin-bottom: 0.85%;
 }
-.instrument-switcher img {
+
+.instrument-switcher .icon-button {
     width: 48%;
+    opacity: 0.5;
 }
+
+.instrument-switcher .icon-button.active {
+    opacity: 1;
+}
+
+/* Garde la place d'un bouton sans usage pour cette piste (alignement des colonnes).
+   visibility: hidden le retire aussi de la navigation clavier et des lecteurs d'écran. */
+.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* --- Écran de chargement ---------------------------------------------------------------- */
 
 #loading-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 1rem;
+    text-align: center;
     color: #ffffff;
     font-size: 1.5rem;
     z-index: 1000;
@@ -186,10 +206,10 @@ body, html {
 
 #progress-bar-container {
     width: 80%;
+    height: 8px;
+    margin-top: 12px;
     background-color: #333;
-    border-radius: 0.425%;
-    margin-top: 0.85%;
-    height: 0.85%;
+    border-radius: 4px;
     overflow: hidden;
 }
 
@@ -198,4 +218,19 @@ body, html {
     width: 0;
     background-color: #4caf50;
     transition: width 0.3s ease;
+}
+
+#retry-button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+    color: #ffffff;
+    background-color: #4caf50;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#retry-button[hidden] {
+    display: none;
 }
