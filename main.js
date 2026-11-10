@@ -21,12 +21,29 @@ const trackNames = [
     'prod.png'
 ];
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await initAudioContext();
-    await preloadAllTracks(trackSources);
+document.addEventListener('DOMContentLoaded', loadApp);
+
+async function loadApp() {
+    const message = document.getElementById('loading-message');
+    const retryButton = document.getElementById('retry-button');
+    message.textContent = 'Chargement en cours...';
+    retryButton.hidden = true;
+
+    try {
+        await initAudioContext();
+        await preloadAllTracks(trackSources);
+    } catch (error) {
+        // Les pistes déjà chargées restent en cache : réessayer ne recharge que les échecs.
+        message.textContent = 'Impossible de charger les pistes audio. Vérifiez votre connexion.';
+        retryButton.hidden = false;
+        return;
+    }
+
     createTrackControls(trackSources.length);
     document.getElementById('loading-screen').style.display = 'none';
-});
+}
+
+document.getElementById('retry-button').addEventListener('click', loadApp);
 
 function createTrackControls(numTracks) {
     const container = document.getElementById('track-controls-container');
