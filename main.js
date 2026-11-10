@@ -5,6 +5,34 @@ import { TRACKS, INITIAL_LEVEL, hasLevels, instrumentImage, instrumentLabel, tra
 document.addEventListener('DOMContentLoaded', loadApp);
 document.getElementById('retry-button').addEventListener('click', loadApp);
 
+const MEGABYTE = 1024 * 1024;
+
+// Barre : 85 % pour le téléchargement, 15 % pour le décodage. Le texte n'est mis à jour
+// que quand il change (il est annoncé par les lecteurs d'écran).
+function showLoadingProgress({ receivedBytes, totalBytes, decodedTracks, totalTracks }) {
+    const message = document.getElementById('loading-message');
+    const bar = document.getElementById('progress-bar');
+
+    const downloadShare = totalBytes ? Math.min(receivedBytes / totalBytes, 1) : decodedTracks / totalTracks;
+    bar.style.width = `${(downloadShare * 0.85 + (decodedTracks / totalTracks) * 0.15) * 100}%`;
+
+    // Taille totale connue dès que chaque piste a répondu ; avant, on ne connaît pas les Mo.
+    const downloading = totalBytes ? receivedBytes < totalBytes : decodedTracks === 0;
+
+    let text;
+    if (downloading) {
+        text = totalBytes
+            ? `Téléchargement des pistes audio : ${Math.floor(receivedBytes / MEGABYTE)} / ${Math.ceil(totalBytes / MEGABYTE)} Mo`
+            : 'Téléchargement des pistes audio…';
+    } else if (decodedTracks < totalTracks) {
+        text = `Préparation des pistes : ${decodedTracks} / ${totalTracks}`;
+    } else {
+        text = 'Prêt !';
+    }
+    if (message.textContent !== text)
+        message.textContent = text;
+}
+
 async function loadApp() {
     const message = document.getElementById('loading-message');
     const retryButton = document.getElementById('retry-button');
@@ -13,7 +41,7 @@ async function loadApp() {
 
     try {
         await initAudioContext();
-        await preloadAllTracks();
+        await preloadAllTracks(showLoadingProgress);
     } catch (error) {
         // Les pistes déjà chargées restent en cache : réessayer ne recharge que les échecs.
         message.textContent = 'Impossible de charger les pistes audio. Vérifiez votre connexion.';
