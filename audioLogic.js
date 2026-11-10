@@ -1,4 +1,5 @@
 let audioContext;
+let masterGain;
 let currentTrackTime = 0;
 let startTime = 0; 
 let tracks = [];
@@ -32,12 +33,10 @@ const instrumentSources = {
 
 let isPlaying = false;
 
-const VOLUME_STEP = 0.1;
 const MAX_VOLUME = 1.0;
 const MIN_VOLUME = 0.0;
 
 let isTracksLoaded = false;
-let originalMuteStates = [];
 
 const maxLevels = [
     3,
@@ -69,6 +68,9 @@ const loadTokens = trackNames.map(() => 0);
 export async function initAudioContext() {
     if (!audioContext || audioContext.state == 'closed') {
         audioContext =  new (window.AudioContext || window.webkitAudioContext)();
+        // Volume général : toutes les pistes passent par ce nœud avant la sortie.
+        masterGain = audioContext.createGain();
+        masterGain.connect(audioContext.destination);
     }
 }
 
@@ -108,41 +110,72 @@ export async function preloadAllTracks(trackSources) {
     isTracksLoaded = true;
 }
 
+// Seul endroit qui décide du gain réel d'une piste, à partir de son volume, de son mute
+// et des solos actifs. Met aussi à jour les boutons Mute/Solo et l'aspect du slider.
+function isAudible(track) {
+    const anySolo = tracks.some(t => t.isSolo);
+    return !track.isMuted && (!anySolo || track.isSolo);
+}
+
+function applyGain(trackIndex) {
+    const track = tracks[trackIndex];
+    track.gainNode.gain.value = isAudible(track) ? track.volume : 0;
+
+    const muteButton = document.getElementById(`muteButton-${trackIndex}`);
+    if (muteButton)
+        muteButton.src = track.isMuted ? "images/Mute/mute_neg.png" : "images/Mute/mute.png";
+
+    const soloButton = document.getElementById(`soloButton-${trackIndex}`);
+    if (soloButton)
+        soloButton.src = track.isSolo ? "images/Solo/Solo_neg.png" : "images/Solo/Solo.png";
+
+    const slider = document.getElementById(`volume-slider-${trackIndex}`);
+    if (slider) {
+        slider.value = Math.round(track.volume * 100);
+        slider.classList.toggle('silenced', !isAudible(track));
+    }
+}
+
+function applyAllGains() {
+    tracks.forEach((_, index) => applyGain(index));
+    updatePlayPauseButtons();
+}
+
+function updatePlayPauseButtons() {
+    const playingImage = "images/PlayPause/Play pause.png";
+    const idleImage = "images/PlayPause/Play_pause_neg.png";
+
+    const generalButton = document.getElementById('playPauseButton');
+    if (generalButton)
+        generalButton.src = isPlaying ? playingImage : idleImage;
+
+    tracks.forEach((track, index) => {
+        const button = document.getElementById(`playPauseButton-${index}`);
+        if (button)
+            button.src = isPlaying && track.isSolo ? playingImage : idleImage;
+    });
+}
+
 export function toggleMute(trackIndex) {
     const track = tracks[trackIndex];
-    const muteButton = document.getElementById(`muteButton-${trackIndex}`);
-
-    const muteEnabledImage = "images/Mute/mute_neg.png";
-    const muteDisabledImage = "images/Mute/mute.png";
-    
     track.isMuted = !track.isMuted;
-    muteButton.src = track.isMuted ? muteEnabledImage : muteDisabledImage;
-    document.getElementById(`volume-slider-${trackIndex}`).value = track.isMuted ? 0 : track.previousVolume * 100;
-
-    if (track.isSolo)
-    {
-        originalMuteStates[trackIndex] = track.isMuted;
-        return;
-    }
-    
-    track.gainNode.gain.value = track.isMuted ? 0 : track.previousVolume; 
+    applyGain(trackIndex);
 }
 
 export function setVolume(trackIndex, volume) {
     const track = tracks[trackIndex];
-    track.previousVolume = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
-    
-    if (track.isMuted && volume > 0) {
+    track.volume = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
+
+    // Toucher au slider d'une piste mutée la réactive.
+    if (track.isMuted && track.volume > 0)
         track.isMuted = false;
-    }
-    track.gainNode.gain.value = track.isMuted ? 0 : track.previousVolume;
+
+    applyGain(trackIndex);
 }
 
-export function setAllVolumes(volume) {
-    tracks.forEach(track => {
-        track.gainNode.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
+export function setMasterVolume(volume) {
+    masterGain.gain.value = Math.min(Math.max(volume / 100, MIN_VOLUME), MAX_VOLUME);
 }
-)};
 
 export async function togglePlayPause() {
     if (!audioContext || audioContext.state == 'closed') {
@@ -172,8 +205,9 @@ async function resumeAudioContext() {
 
 function createTrack(buffer) {
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = 1.0; // Set initial volume to max
-    return { buffer, gainNode, isMuted: false, source: null, previousVolume: 1.0};
+    gainNode.gain.value = 1.0;
+    gainNode.connect(masterGain);
+    return { buffer, gainNode, source: null, volume: 1.0, isMuted: false, isSolo: false };
 }
 
 function createSource(buffer) {
@@ -188,18 +222,19 @@ function startAllTracks() {
         if (!track.source) {
             track.source = createSource(track.buffer);
             track.source.connect(track.gainNode);
-            track.gainNode.connect(audioContext.destination);
             track.source.start(0, currentTrackTime);
         }
     });
     startTime = audioContext.currentTime - currentTrackTime;
     isPlaying = true;
+    updatePlayPauseButtons();
 }
 
 async function pauseAllTracks() {
     currentTrackTime = audioContext.currentTime - startTime;
-    await audioContext.suspend();
     isPlaying = false;
+    updatePlayPauseButtons();
+    await audioContext.suspend();
 }
 
 function handleTrackEnd() {
@@ -215,70 +250,25 @@ async function initializeAndPlayTracks() {
 
 export async function stopTracks() {
     if (audioContext) {
-        tracks.forEach((track, index) => {
+        // Stop remet aussi à zéro les solos et les mutes (les volumes sont conservés).
+        tracks.forEach(track => {
             if (track.source) {
                 disposeSource(track.source);
                 track.source = null;
-                if (track.isSolo)
-                    toggleSolo(index);
-                if (track.isMuted)
-                    toggleMute(index);
             }
+            track.isSolo = false;
+            track.isMuted = false;
         });
         isPlaying = false;
         currentTrackTime = 0;
+        applyAllGains();
     }
-}
-
-export function increaseAllVolumes() {
-    tracks.forEach((track, index) => {
-        setVolume(index, track.gainNode.gain.value + VOLUME_STEP);
-    });
-}
-
-export function decreaseAllVolumes() {
-    tracks.forEach((track, index) => {
-        setVolume(index, track.gainNode.gain.value - VOLUME_STEP);
-    });
 }
 
 export function toggleSolo(trackIndex) {
     const track = tracks[trackIndex];
-    const soloButton = document.getElementById(`soloButton-${trackIndex}`);
-
     track.isSolo = !track.isSolo;
-
-    const soloEnabledImage = "images/Solo/Solo_neg.png";
-    const soloDisabledImage = "images/Solo/Solo.png";
-    soloButton.src = track.isSolo ? soloEnabledImage : soloDisabledImage;  
-    applyStrongMute();
-}
-
-function applyStrongMute() {
-    const soloedTracks = tracks.filter(track => track.isSolo);
-
-    if (soloedTracks.length > 0) {
-        tracks.forEach((track, index) => {
-            if (originalMuteStates[index] == undefined) {
-                originalMuteStates[index] = track.isMuted;
-            }
-
-            if (track.isSolo) {
-                    track.gainNode.gain.value = track.previousVolume;
-                    document.getElementById(`volume-slider-${index}`).value = track.previousVolume * 100;
-            } else {
-                track.gainNode.gain.value = 0;
-                document.getElementById(`volume-slider-${index}`).value = 0;
-            }
-        });
-    } else {
-        tracks.forEach((track, index) => {
-            track.isMuted = originalMuteStates[index];
-            track.gainNode.gain.value = track.isMuted ? 0 : track.previousVolume;
-            document.getElementById(`volume-slider-${index}`).value = track.isMuted ? 0 : track.previousVolume * 100;
-        });
-        originalMuteStates = [];
-    }
+    applyAllGains();
 }
 
 export function toggleLocalTrackPlayPause(trackIndex)
@@ -316,7 +306,6 @@ function replaceTrackBuffer(trackIndex, buffer) {
 
     track.source = createSource(buffer);
     track.source.connect(track.gainNode);
-    track.gainNode.connect(audioContext.destination);
     track.source.start(0, currentPlaybackTime);
 }
 

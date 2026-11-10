@@ -110,6 +110,11 @@ body, html {
     transform: rotate(180deg);
 }
 
+/* Piste coupée par un mute ou par le solo d'une autre piste : le volume reste visible. */
+.volume-control input[type="range"].silenced {
+    opacity: 0.35;
+}
+
 .mute-button {
     width: 100%;
     height: auto;
