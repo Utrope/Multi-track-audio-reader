@@ -4,7 +4,7 @@
 Chaque musicien isole sa partie, choisit son niveau de difficulté, baisse ou coupe les
 autres pistes, et télécharge la partition qui correspond à ce qu'il entend.
 
-**[▶ Essayer la démo](https://utrope.github.io)** · aucune installation, fonctionne dans le navigateur
+**[▶ Essayer la démo](https://utrope.github.io/Multi-track-audio-reader/)** · aucune installation, fonctionne dans le navigateur
 
 ![Interface du lecteur : sept pistes (batterie, basse, guitare, clavier, saxophone alto / flûte, trombone / saxophone ténor, production) et une colonne générale, avec pour chacune Solo, Mute, niveau, partition, volume et lecture](docs/screenshot.png)
 
