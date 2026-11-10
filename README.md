@@ -8,13 +8,15 @@ tracks, and downloads the score that matches what they hear.
 
 **[▶ Try the demo](https://utrope.github.io/Multi-track-audio-reader/)** · nothing to install, runs in the browser (interface in French)
 
-![Player interface: seven tracks (drums, bass, guitar, keyboard, alto sax / flute, trombone / tenor sax, backing track) and a master column, each with Solo, Mute, level, score, volume and play controls](docs/screenshot.png)
+![Player interface: a timeline with an A-B loop above seven tracks (drums, bass, guitar, keyboard, alto sax / flute, trombone / tenor sax, backing track) and a master column, each with Solo, Mute, level, score, volume and play controls](docs/screenshot.png)
 
 ## Features
 
 - **7 tracks played together**, perfectly in sync: drums, bass, guitar, keyboard, two
   wind sections and the full backing track.
 - **3 difficulty levels per instrument**, switchable mid-playback with no gap or drift.
+- **Timeline**: see where you are in the song and jump anywhere.
+- **A-B loop** to repeat a passage as many times as needed, on all tracks at once.
 - **Instrument choice** for the wind sections (alto sax or flute, trombone or tenor sax).
 - **Solo, Mute and volume** per track, plus a master volume.
 - **PDF score** for the current instrument and level, in one click.
@@ -27,6 +29,10 @@ tracks, and downloads the score that matches what they hear.
 - **Sample-accurate synchronized playback**: every source is scheduled on the same instant
   of the audio clock. A level change stops the old source and starts the new one at the
   exact same instant, at the same position.
+- **Seamless A-B looping**: the loop is applied by the audio sources themselves
+  (`loop` / `loopStart` / `loopEnd`), so it wraps sample-accurately and identically on
+  every track. The current position is derived from a single playback anchor, which stays
+  exact across pauses, seeks and level changes.
 - **Consistent under concurrent changes**: each track keeps the latest requested variant
   and a request token, so late responses are ignored and rapid clicks always end in the
   right state.
@@ -64,6 +70,10 @@ For each track:
 - Tracks 5 and 6: pick the instrument by clicking its icon.
 
 Master column: play / pause, stop (also resets solos and mutes) and master volume.
+
+Timeline, above the tracks: drag or click the bar to move in the song. **A** sets the
+loop start at the current position, **B** sets its end and starts looping; **Boucle**
+turns the loop on or off and **✕** clears it.
 
 Everything works from the keyboard (Tab, Enter / Space, arrow keys for sliders).
 
