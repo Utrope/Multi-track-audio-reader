@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml/badge.svg)](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml)
 
-*English · [Français](README.fr.md)*
+*English · [Français](README.fr.md)* · Version 1.1 – see the [changelog](CHANGELOG.md)
 
 **An in-browser mixer to work on a song one instrument at a time.**
 Each musician isolates their part, picks a difficulty level, turns down or mutes the other
