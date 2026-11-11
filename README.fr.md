@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml/badge.svg)](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml)
 
-*[English](README.md) · Français* · Version 1.1 – voir le [journal des modifications](CHANGELOG.md) (en anglais)
+*[English](README.md) · Français* · Version 1.1 – voir le [journal des modifications](CHANGELOG.md) et la [feuille de route](ROADMAP.md) (en anglais)
 
 **Un mélangeur dans le navigateur pour travailler un morceau instrument par instrument.**
 Chaque musicien isole sa partie, choisit son niveau de difficulté, baisse ou coupe les
