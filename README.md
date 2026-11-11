@@ -1,5 +1,7 @@
 # Infini – a multitrack player for band practice
 
+[![Tests](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml/badge.svg)](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml)
+
 *English · [Français](README.fr.md)*
 
 **An in-browser mixer to work on a song one instrument at a time.**
@@ -57,6 +59,23 @@ python -m http.server 8000
 ```
 
 then open <http://localhost:8000>.
+
+## Tests
+
+End-to-end tests with [Playwright](https://playwright.dev) (`tests/app.spec.js`): the page
+loads the 7 tracks, Play starts and the position moves, a level change keeps playing,
+Solo / Mute silence the right tracks, the A-B loop keeps the position between A and B, and
+the score button downloads the right PDF. They run on every push and pull request with
+GitHub Actions. To run them locally (Node.js and Python required):
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+To use the Chrome already installed on your machine instead of downloading Chromium, skip
+the second command and run `PW_CHROME=1 npm test`.
 
 ## Usage
 

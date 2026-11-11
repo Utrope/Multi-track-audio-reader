@@ -1,5 +1,7 @@
 # Infini – lecteur multipiste pour répéter en groupe
 
+[![Tests](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml/badge.svg)](https://github.com/Utrope/Multi-track-audio-reader/actions/workflows/tests.yml)
+
 *[English](README.md) · Français*
 
 **Un mélangeur dans le navigateur pour travailler un morceau instrument par instrument.**
@@ -62,6 +64,24 @@ python -m http.server 8000
 ```
 
 puis ouvrir <http://localhost:8000>.
+
+## Tests
+
+Tests de bout en bout avec [Playwright](https://playwright.dev) (`tests/app.spec.js`) : la
+page charge les 7 pistes, Play démarre et la position avance, un changement de niveau
+garde la lecture, Solo et Mute coupent les bonnes pistes, la boucle A-B garde la position
+entre A et B, et le bouton de partition télécharge le bon PDF. Ils tournent à chaque push
+et pull request avec GitHub Actions. Pour les lancer en local (Node.js et Python
+nécessaires) :
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+Pour utiliser le Chrome déjà installé sur la machine plutôt que de télécharger Chromium,
+sautez la deuxième commande et lancez `PW_CHROME=1 npm test`.
 
 ## Utilisation
 
