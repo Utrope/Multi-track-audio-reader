@@ -1,0 +1,12 @@
+{
+  "name": "multi-track-audio-reader",
+  "private": true,
+  "description": "Lecteur multipiste dans le navigateur. Aucune dépendance à l'exécution : ce fichier ne sert qu'aux tests automatiques.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1"
+  }
+}
